@@ -1,0 +1,27 @@
+use strict;
+use warnings;
+use Test::More;
+use Skein::Graph;
+
+my $chain = Skein::Graph->new([qw(a b c d)], [[qw(a b)], [qw(b c)], [qw(a c)]]);
+is_deeply($chain->topological, [qw(a b c d)], 'deterministic topology');
+is_deeply($chain->ancestors(['c']), [qw(a b c)], 'ancestor closure');
+is_deeply($chain->descendants(['a']), [qw(a b c)], 'descendant closure');
+is_deeply($chain->shortest_path('a', 'c'), [qw(a c)], 'shortest path');
+is_deeply($chain->transitive_reduction->edges, [[qw(a b)], [qw(b c)]], 'transitive reduction');
+is_deeply($chain->components, [[qw(a b c)], ['d']], 'weak components');
+is_deeply($chain->intervene(['b'])->parents('b'), [], 'incoming intervention edges cut');
+is_deeply($chain->parents('b'), ['a'], 'source graph unchanged');
+my $collider = Skein::Graph->new([qw(a b c d)], [[qw(a c)], [qw(b c)], [qw(c d)]]);
+ok($collider->d_separated(['a'], ['b'], []), 'collider blocks');
+ok(!$collider->d_separated(['a'], ['b'], ['c']), 'observed collider opens');
+ok(!$collider->d_separated(['a'], ['b'], ['d']), 'observed collider descendant opens');
+my $fork = Skein::Graph->new([], [[qw(a b)], [qw(a c)]]);
+ok(!$fork->d_separated(['b'], ['c'], []), 'fork connects');
+ok($fork->d_separated(['b'], ['c'], ['a']), 'conditioned fork blocks');
+ok(!eval { $fork->add_edge('b', 'a')->topological; 1 }, 'cycle rejected');
+ok(!eval { $chain->parents('absent'); 1 }, 'unknown vertex rejected');
+my $fill = Skein::Graph->min_fill_order([[qw(a b)], [qw(b c)], [qw(c d)]], [qw(a b c d)]);
+is($fill->{induced_width}, 1, 'chain width');
+is_deeply($fill->{order}, [qw(a b c d)], 'min-fill ties deterministic');
+done_testing;
