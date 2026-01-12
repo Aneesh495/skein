@@ -6,6 +6,7 @@ use Skein::Rat qw(text);
 
 my $source = 'model test; noise u ~ 1/3; node b = a | u; node a = !u; query q = P(b); repair r = a=0 cost 3;';
 my $model = Skein::Model->from_text($source);
+like($model->digest, qr/\A[0-9a-f]{64}\z/, 'model identity is a SHA-256 digest');
 is_deeply($model->node_order, [qw(a b)], 'forward references topologically resolved');
 is_deeply($model->world({u => 0}), {u => 0, a => 1, b => 1}, 'factual world');
 is_deeply($model->world({u => 0}, {a => 0}), {u => 0, a => 0, b => 0}, 'internal intervention propagates');

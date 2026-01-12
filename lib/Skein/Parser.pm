@@ -21,7 +21,7 @@ sub new {
 sub expression {
     my ($self, $minimum) = @_;
     $minimum //= 1;
-    $self->{lexer}->error('expression nesting limit exceeded') if ++$self->{depth} > 128;
+    $self->{lexer}->error('expression nesting limit exceeded') if ++$self->{depth} > 96;
     $self->{lexer}->error('expression size limit exceeded') if ++$self->{expression_nodes} > 100_000;
     my $left = $self->_prefix;
     while (1) {

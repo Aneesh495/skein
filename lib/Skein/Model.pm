@@ -6,7 +6,7 @@ use Skein::Parser;
 use Skein::Expr qw(validate support evaluate const);
 use Skein::Graph;
 use Skein::Rat qw(probability text compare mul complement one);
-use Skein::Util qw(check_keys identifier integer boolean deep_copy digest read_text);
+use Skein::Util qw(check_keys identifier integer boolean deep_copy read_text);
 
 sub from_text {
     my ($class, $source, %options) = @_;
@@ -107,7 +107,7 @@ sub new {
     for my $key (qw(noise nodes queries repairs)) {
         $raw->{$key} = [sort { $a->{name} cmp $b->{name} } @{$raw->{$key}}];
     }
-    $self->{digest} = digest($raw);
+    $self->{digest} = Skein::Util::digest($raw);
     return $self;
 }
 
