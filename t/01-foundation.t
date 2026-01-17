@@ -12,6 +12,11 @@ is(text(subr(0, '1/7')), '-1/7', 'negative result');
 is(text(complement('0.125')), '7/8', 'decimal parsed exactly');
 is(text(sum('1/7', '2/7', '4/7')), '1', 'sum');
 is(text(product('1/2', '1/3', '1/4')), '1/24', 'product');
+for my $operation (\&add, \&subr, \&mul, \&divr) {
+    my @values = $operation->(0, 1);
+    is(scalar @values, 1, 'arithmetic returns one value in list context');
+}
+is(text(add(mul('3/4', 0), mul('1/4', 1))), '1/4', 'nested zero arithmetic');
 my $original = rat('1/3');
 add($original, 1);
 is(text($original), '1/3', 'arithmetic does not mutate operands');

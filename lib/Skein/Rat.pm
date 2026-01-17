@@ -34,9 +34,9 @@ sub probability {
 
 sub zero { return Math::BigRat->new(0) }
 sub one { return Math::BigRat->new(1) }
-sub add { return rat($_[0])->badd(rat($_[1])) }
-sub subr { return rat($_[0])->bsub(rat($_[1])) }
-sub mul { return rat($_[0])->bmul(rat($_[1])) }
+sub add { return scalar rat($_[0])->badd(rat($_[1])) }
+sub subr { return scalar rat($_[0])->bsub(rat($_[1])) }
+sub mul { return scalar rat($_[0])->bmul(rat($_[1])) }
 
 sub divr {
     my ($a, $b) = @_;
@@ -47,7 +47,7 @@ sub divr {
     return $result;
 }
 
-sub complement { return one()->bsub(rat($_[0])) }
+sub complement { return scalar one()->bsub(rat($_[0])) }
 sub compare { return rat($_[0])->bcmp(rat($_[1])) }
 sub text { return rat($_[0])->bstr }
 sub is_zero { return rat($_[0])->is_zero ? 1 : 0 }
