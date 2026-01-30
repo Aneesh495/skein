@@ -1,0 +1,23 @@
+use strict;
+use warnings;
+use Test::More;
+use Skein::Model;
+use Skein::Engine;
+use Skein::Importance;
+
+my $model = Skein::Model->from_text('noise a ~ 1/2; noise b ~ 1/2; noise c ~ 1/4; node x = a | b; query q = P(x);');
+my $importance = Skein::Importance->new(Skein::Engine->new($model));
+my $profile = $importance->profile('q');
+is($profile->{baseline}, '3/4', 'importance baseline');
+is($profile->{variables}[0]{removable_risk}, '1/4', 'removable risk');
+is($profile->{variables}[0]{fussell_vesely}, '1/3', 'FV importance');
+is($profile->{variables}[0]{risk_achievement}, '4/3', 'achievement ratio');
+is($profile->{variables}[0]{risk_reduction}, '3/2', 'reduction ratio');
+is($importance->interaction('q', 'a', 'b')->{contrast}, '-1', 'redundant failure overlap');
+my $shapley = $importance->shapley('q');
+is($shapley->{contributions}{a}, '3/8', 'symmetric Shapley a');
+is($shapley->{contributions}{b}, '3/8', 'symmetric Shapley b');
+is($shapley->{contributions}{c}, '0', 'dummy noise Shapley');
+is($shapley->{explained_difference}, '3/4', 'Shapley efficiency');
+ok(!eval { $importance->shapley('q', max_variables => 1); 1 }, 'explicit Shapley bound');
+done_testing;
