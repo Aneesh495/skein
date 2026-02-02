@@ -1,0 +1,34 @@
+use strict;
+use warnings;
+use Test::More;
+use Skein::Model;
+use Skein::Engine;
+use Skein::Robust;
+
+my $model = Skein::Model->from_text(<<'MODEL');
+noise a ~ 1/4;
+noise b ~ 1/3;
+node x = a;
+node y = b;
+node outage = x | y;
+query q = P(outage);
+interval a = [1/10,1/2];
+interval b = [1/5,2/5];
+repair fix_x = x=0 cost 2;
+repair fix_y = y=0 cost 3;
+MODEL
+my $robust = Skein::Robust->new(Skein::Engine->new($model));
+my $bounds = $robust->bounds('q', include_vertices => 1);
+is($bounds->{minimum}{probability}, '7/25', 'exact box minimum');
+is($bounds->{maximum}{probability}, '7/10', 'exact box maximum');
+is($bounds->{vertices}, 4, 'all box vertices visited');
+is(scalar @{$bounds->{evaluations}}, 4, 'vertex evidence preserved');
+my $plan = $robust->plan('q', budget => 2);
+is($plan->{selected}{probability}, '2/5', 'robust repair objective');
+is_deeply($plan->{selected}{actions}, ['fix_x'], 'robust repair selected');
+my $conditioned = Skein::Model->from_text('noise a ~ 1/2; query q = P(a) given(a); interval a = [0,1];');
+ok(!eval { Skein::Robust->new(Skein::Engine->new($conditioned))->bounds('q'); 1 }, 'zero evidence at box corner rejected');
+ok(!eval { Skein::Robust->new(Skein::Engine->new($model), max_vertices => 2)->bounds('q'); 1 }, 'vertex bound explicit');
+my $fixed = $robust->bounds('q', intervals => {a => ['1/4','1/4']});
+is($fixed->{vertices}, 1, 'degenerate interval avoids duplicates');
+done_testing;
