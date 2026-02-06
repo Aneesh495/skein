@@ -1,0 +1,27 @@
+use strict;
+use warnings;
+use Test::More;
+use Skein::Model;
+use Skein::Engine;
+use Skein::Compare;
+use Skein::Expr qw(var);
+
+my $before = Skein::Model->from_text('noise a ~ 1/3; noise b ~ 1/5; node x = a | b; query q = P(x);');
+my $after = Skein::Model->from_text('noise a ~ 1/3; noise b ~ 1/5; node x = a & b; query q = P(x);');
+my $diff = Skein::Compare->model_diff($before, $after);
+is(scalar @{$diff->{changes}}, 1, 'one changed equation');
+is($diff->{changes}[0]{name}, 'x', 'changed equation identified');
+my $coupling = Skein::Compare->coupled_event($before, $after, var('x'));
+is($coupling->{old_probability}, '7/15', 'old risk');
+is($coupling->{new_probability}, '1/15', 'new risk');
+is($coupling->{regression_mass}, '0', 'no coupled regression');
+is($coupling->{improvement_mass}, '2/5', 'exact coupled improvement');
+is($coupling->{disagreement_mass}, '2/5', 'exact semantic difference');
+my $equivalent = Skein::Model->from_text('noise a ~ 1/3; noise b ~ 1/5; node x = b | a; query q = P(x);');
+ok(Skein::Compare->coupled_event($before, $equivalent, var('x'))->{logically_equivalent}, 'canonical equivalence across source changes');
+my $orders = Skein::Compare->order_experiment(Skein::Engine->new($before), 'q');
+is(scalar @{$orders->{trials}}, 2, 'distinct variable orders tested');
+is($orders->{best_measured}{numerator}, '7/15', 'ordered mass retains semantics');
+my $different = Skein::Model->from_text('noise a ~ 1/2; noise b ~ 1/5; node x = a | b;');
+ok(!eval { Skein::Compare->coupled_event($before, $different, var('x')); 1 }, 'implicit prior coupling rejected');
+done_testing;
