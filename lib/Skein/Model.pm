@@ -20,7 +20,7 @@ sub from_file {
 
 sub new {
     my ($class, $input) = @_;
-    check_keys($input, [qw(schema name title noise nodes queries repairs intervals order)],
+    check_keys($input, [qw(schema name title noise nodes queries repairs sensors intervals order)],
         [qw(noise nodes)], 'model');
     my $raw = deep_copy($input);
     $raw->{schema} //= 'skein.model/1';
@@ -31,8 +31,9 @@ sub new {
     die "invalid model title\n" if ref($raw->{title}) || length($raw->{title}) > 4096;
     $raw->{queries} //= [];
     $raw->{repairs} //= [];
+    $raw->{sensors} //= [];
     $raw->{intervals} //= {};
-    for my $list (qw(noise nodes queries repairs)) {
+    for my $list (qw(noise nodes queries repairs sensors)) {
         die "$list must be an array\n" unless ref($raw->{$list}) eq 'ARRAY';
         die "$list exceeds model size limit\n" if @{$raw->{$list}} > 4096;
     }
@@ -92,6 +93,14 @@ sub new {
         $repair->{cost} = integer($repair->{cost}, 'repair cost', 0, 1_000_000);
         $self->{repairs}{$name} = $repair;
     }
+    my %sensor_names;
+    for my $sensor (@{$raw->{sensors}}) {
+        check_keys($sensor, [qw(name expr cost)], [qw(name expr cost)], 'sensor');
+        my $name = identifier($sensor->{name}, 'sensor name');
+        die "duplicate sensor '$name'\n" if $sensor_names{$name}++;
+        $self->validate_expression($sensor->{expr});
+        $sensor->{cost} = integer($sensor->{cost}, 'sensor cost', 0, 1_000_000);
+    }
     die "intervals must be an object\n" unless ref($raw->{intervals}) eq 'HASH';
     for my $name (sort keys %{$raw->{intervals}}) {
         die "interval refers to unknown noise '$name'\n" unless exists $self->{noise}{$name};
@@ -104,7 +113,7 @@ sub new {
         $raw->{intervals}{$name} = [text($low), text($high)];
     }
     # Canonical identity does not depend on declaration order.
-    for my $key (qw(noise nodes queries repairs)) {
+    for my $key (qw(noise nodes queries repairs sensors)) {
         $raw->{$key} = [sort { $a->{name} cmp $b->{name} } @{$raw->{$key}}];
     }
     $self->{digest} = Skein::Util::digest($raw);
@@ -154,6 +163,7 @@ sub priors { return {%{$_[0]{noise}}} }
 sub intervals { return deep_copy($_[0]{raw}{intervals}) }
 sub query_names { return [sort keys %{$_[0]{queries}}] }
 sub repairs { return deep_copy($_[0]{raw}{repairs}) }
+sub sensors { return deep_copy($_[0]{raw}{sensors}) }
 
 sub equation {
     my ($self, $name) = @_;

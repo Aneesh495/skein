@@ -117,7 +117,7 @@ sub model {
     my $lexer = $self->{lexer};
     my $result = {
         schema => 'skein.model/1', name => 'untitled', title => '',
-        noise => [], nodes => [], queries => [], repairs => [], intervals => {},
+        noise => [], nodes => [], queries => [], repairs => [], sensors => [], intervals => {},
     };
     my %single;
     while ($lexer->peek->{type} ne 'eof') {
@@ -172,6 +172,14 @@ sub model {
             $lexer->expect('cost');
             my $cost = $lexer->expect_type('number')->{value};
             push @{$result->{repairs}}, {name => $name, node => $node, value => $value, cost => $cost};
+        } elsif ($kind eq 'sensor') {
+            my $name = $lexer->expect_type('name')->{value};
+            $lexer->expect('=');
+            $self->{expression_nodes} = 0;
+            my $expr = $self->expression;
+            $lexer->expect('cost');
+            my $cost = $lexer->expect_type('number')->{value};
+            push @{$result->{sensors}}, {name => $name, expr => $expr, cost => $cost};
         } elsif ($kind eq 'interval') {
             my $name = $lexer->expect_type('name')->{value};
             $lexer->error("duplicate interval '$name'") if exists $result->{intervals}{$name};

@@ -1,0 +1,37 @@
+use strict;
+use warnings;
+use Test::More;
+use Skein::Model;
+use Skein::Engine;
+use Skein::Policy;
+use Skein::Util qw(deep_copy);
+
+my $model = Skein::Model->from_text(<<'MODEL');
+noise disk ~ 1/5;
+noise power ~ 1/10;
+node d = disk;
+node p = power;
+node outage = d | p;
+query q = P(outage);
+sensor disk_alarm = d cost 1;
+sensor power_alarm = p cost 1;
+repair fix_disk = d=0 cost 5;
+repair fix_power = p=0 cost 5;
+MODEL
+my $synthesizer = Skein::Policy->new(Skein::Engine->new($model));
+my $policy = $synthesizer->synthesize('q', budget => 12, failure_loss => 100);
+is($policy->{tree}{kind}, 'sensor', 'adaptive observation has value');
+is($policy->{tree}{expected_risk}, '0', 'adaptive policy repairs all observed failures');
+is($policy->{tree}{expected_cost}, '7/2', 'exact expected sensing and repair cost');
+is($policy->{tree}{expected_loss}, '7/2', 'zero residual loss');
+my $verified = $synthesizer->verify($policy);
+ok($verified->{verified}, 'independent complete-world policy verification');
+is($verified->{worlds}, 4, 'policy verified over every realization');
+my $cheap = $synthesizer->synthesize('q', budget => 12, failure_loss => 1);
+is($cheap->{tree}{kind}, 'repair', 'small failure loss avoids costly diagnosis');
+is_deeply($cheap->{tree}{actions}, [], 'stop without unnecessary repairs');
+my $corrupt = deep_copy($policy);
+$corrupt->{tree}{expected_loss} = '0';
+ok(!eval { $synthesizer->verify($corrupt); 1 }, 'corrupt policy rejected');
+ok(!eval { Skein::Policy->new(Skein::Engine->new($model), max_states => 1)->synthesize('q'); 1 }, 'policy bound explicit');
+done_testing;
