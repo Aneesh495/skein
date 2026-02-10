@@ -1,0 +1,10 @@
+model confounding;
+title "Suppressing an alarm does not repair its cause";
+noise shared ~ 1/2;
+noise local ~ 1/4;
+node alarm = shared;
+node failure = shared | local;
+query baseline = P(failure);
+query observed_silent = P(failure) given(!alarm);
+query forced_silent = P(failure) do(alarm=0);
+query replaced_failure = P(failure) do(failure=0) factual(failure);

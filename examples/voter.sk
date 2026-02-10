@@ -1,0 +1,18 @@
+model voter;
+title "Majority redundancy with a shared environmental shock";
+noise environment ~ 1/40;
+noise a_noise ~ 1/10;
+noise b_noise ~ 1/10;
+noise c_noise ~ 1/10;
+node shock = environment;
+node a = shock | a_noise;
+node b = shock | b_noise;
+node c = shock | c_noise;
+node failure = atleast(2, a, b, c);
+query baseline = P(failure);
+query observed_a = P(failure) given(a);
+query replacement = P(failure) do(a=0);
+query counterfactual = P(failure) do(a=0) factual(failure);
+repair fix_a = a=0 cost 1;
+repair fix_b = b=0 cost 1;
+repair fix_c = c=0 cost 1;

@@ -1,0 +1,12 @@
+model diagnosis;
+title "Observe before spending the repair budget";
+noise disk_noise ~ 1/5;
+noise power_noise ~ 1/10;
+node disk = disk_noise;
+node power = power_noise;
+node outage = disk | power;
+query baseline = P(outage);
+sensor disk_alarm = disk cost 1;
+sensor power_alarm = power cost 1;
+repair replace_disk = disk=0 cost 5;
+repair isolate_power = power=0 cost 5;
