@@ -1,0 +1,22 @@
+use strict;
+use warnings;
+use Test::More;
+use Skein::Markov;
+
+my $chain = Skein::Markov->new([qw(healthy failed)], [['9/10','1/10'],['1/2','1/2']]);
+is_deeply($chain->distribution(1), {healthy => '9/10', failed => '1/10'}, 'one transition');
+is_deeply($chain->distribution(2), {healthy => '43/50', failed => '7/50'}, 'repairing chain evolution');
+is_deeply($chain->stationary, {healthy => '5/6', failed => '1/6'}, 'stationary distribution exact');
+my $passage = $chain->first_passage(['failed'], 3);
+is($passage->{cumulative}, '271/1000', 'first failure differs from terminal failure');
+is($passage->{times}[2]{mass}, '9/100', 'first passage at second step');
+is($chain->hitting_times(['failed'])->{expected_steps}{healthy}, '10', 'mean time to first failure');
+is($chain->expected_reward({healthy => 1}, 3)->{total}, '69/25', 'uptime reward at times zero through two');
+my $branch = Skein::Markov->new([qw(start success trap)], [[0,'1/3','2/3'],[0,1,0],[0,0,1]]);
+is_deeply($branch->hitting_probabilities(['success']), {start => '1/3', success => '1', trap => '0'}, 'reachable absorbing alternatives');
+ok(!defined($branch->hitting_times(['success'])->{expected_steps}{start}), 'infinite unconditional hitting time');
+is(scalar @{$branch->communicating_classes}, 3, 'communicating classes');
+ok(!eval { $branch->stationary; 1 }, 'nonunique stationary distribution rejected');
+ok(!eval { Skein::Markov->new(['a'], [['1/2']]); 1 }, 'nonstochastic row rejected');
+ok(!eval { $chain->distribution(1000); 1 }, 'horizon bound');
+done_testing;
