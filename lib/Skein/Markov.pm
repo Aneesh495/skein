@@ -38,7 +38,7 @@ sub _distribution {
     my ($self, $input) = @_;
     my @values;
     if (!defined $input) {
-        @values = (one(), (zero()) x ($self->states->@* - 1));
+        @values = (one(), (zero()) x (scalar(@{$self->{states}}) - 1));
     } elsif (ref($input) eq 'ARRAY') {
         die "Markov initial distribution dimension mismatch\n" unless @$input == @{$self->{states}};
         @values = map { probability($_) } @$input;

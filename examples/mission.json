@@ -1,0 +1,15 @@
+{
+  "name": "replicas",
+  "horizon": 4,
+  "threshold": 2,
+  "shared_shock": "1/100",
+  "persistent_shock": "1/200",
+  "processes": [
+    {"name": "a", "failure": "1/20", "repair": "1/2"},
+    {"name": "b", "failure": "1/20", "repair": "1/2"}
+  ],
+  "repairs": [
+    {"name": "reset_a", "process": "a", "tick": 2, "cost": 1},
+    {"name": "reset_b", "process": "b", "tick": 2, "cost": 1}
+  ]
+}
