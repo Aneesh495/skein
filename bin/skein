@@ -1,0 +1,9 @@
+#!/usr/bin/env perl
+use 5.020;
+use strict;
+use warnings;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use Skein::CLI;
+
+exit Skein::CLI->main(\@ARGV);
