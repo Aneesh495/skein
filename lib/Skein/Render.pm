@@ -5,6 +5,7 @@ use warnings;
 use Scalar::Util qw(refaddr);
 use Skein::Util qw(xml_escape integer);
 use Skein::Expr qw(render);
+use Skein::Rat ();
 
 sub _dot_string {
     my ($value) = @_;

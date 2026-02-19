@@ -117,7 +117,7 @@ sub check_keys {
 }
 
 sub deep_copy {
-    return JSON::PP->new->decode(canonical_json($_[0]));
+    return JSON::PP->new->utf8->decode(canonical_json($_[0]));
 }
 
 sub xml_escape {
