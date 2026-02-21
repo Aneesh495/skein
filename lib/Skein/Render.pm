@@ -55,13 +55,13 @@ sub diagram_dot {
 }
 
 sub _svg_start {
-    my ($width, $height, $label) = @_;
+    my ($width, $height, $label, $marker) = @_;
     return '<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="'
         . xml_escape($label) . '" viewBox="0 0 ' . $width . ' ' . $height
         . '" width="' . $width . '" height="' . $height . '">'
-        . '<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" '
+        . (defined($marker) ? '<defs><marker id="' . xml_escape($marker) . '" viewBox="0 0 10 10" refX="9" refY="5" '
         . 'markerWidth="5" markerHeight="5" orient="auto-start-reverse">'
-        . '<path d="M 0 0 L 10 5 L 0 10 z" fill="#8b958f"/></marker></defs>';
+        . '<path d="M 0 0 L 10 5 L 0 10 z" fill="#8b958f"/></marker></defs>' : '');
 }
 
 sub _label {
@@ -102,7 +102,7 @@ sub model_svg {
             $positions{$names[$i]} = [$offset + $i * 210 + 15, 25 + $layer * 110];
         }
     }
-    my $svg = _svg_start($width,$height,'Structural causal graph for ' . $model->name);
+    my $svg = _svg_start($width,$height,'Structural causal graph for ' . $model->name, 'model-arrow');
     for my $edge (@{$graph->edges}) {
         my ($from,$to) = @$edge;
         my ($x1,$y1) = @{$positions{$from}};
@@ -112,7 +112,7 @@ sub model_svg {
         $y1 += 56;
         my $middle = ($y1 + $y2) / 2;
         $svg .= '<path d="M' . "$x1 $y1 C$x1 $middle $x2 $middle $x2 $y2"
-            . '" fill="none" stroke="#9ca69f" stroke-width="1.5" marker-end="url(#arrow)"/>';
+            . '" fill="none" stroke="#9ca69f" stroke-width="1.5" marker-end="url(#model-arrow)"/>';
     }
     my $priors = $model->priors;
     for my $name (@{$graph->nodes}) {
@@ -158,7 +158,7 @@ sub diagram_svg {
             $position{$ids[$i]} = [$offset+$i*190+95, 40+$layer*105];
         }
     }
-    my $svg = _svg_start($width,$height,'Reduced ordered decision diagram');
+    my $svg = _svg_start($width,$height,'Reduced ordered decision diagram', 'diagram-arrow');
     for my $id (@$reachable) {
         next if $id < 2;
         my ($rank,$low,$high) = @{$bdd->node($id)};
@@ -169,7 +169,7 @@ sub diagram_svg {
             my $dash = $value ? '' : ' stroke-dasharray="4 4"';
             $svg .= '<path d="M' . "$x " . ($y+20) . ' L' . "$cx " . ($cy-20)
                 . '" stroke="' . ($value ? '#577a63' : '#aaa394') . '" stroke-width="1.5"'
-                . $dash . ' fill="none" marker-end="url(#arrow)"/>';
+                . $dash . ' fill="none" marker-end="url(#diagram-arrow)"/>';
             $svg .= '<text x="' . (($x+$cx)/2 + ($value ? 7 : -10)) . '" y="' . (($y+$cy)/2)
                 . '" font-family="monospace" font-size="11" fill="#6a746b">' . $value . '</text>';
         }

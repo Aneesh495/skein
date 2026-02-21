@@ -14,6 +14,7 @@ sub matrix {
     die "matrix must be an array of rows\n" unless ref($input) eq 'ARRAY';
     my $limit = integer($options{max_dimension} // 128, 'matrix dimension limit', 1, 512);
     die "matrix row limit exceeded\n" if @$input > $limit;
+    die "matrix row must be an array\n" if @$input && ref($input->[0]) ne 'ARRAY';
     my $columns = @$input ? scalar @{$input->[0]} : 0;
     die "matrix column limit exceeded\n" if $columns > $limit;
     my @result;

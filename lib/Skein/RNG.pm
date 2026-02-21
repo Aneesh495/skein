@@ -3,6 +3,7 @@ use 5.020;
 use strict;
 use warnings;
 use Digest::SHA qw(sha256);
+use Encode qw(encode);
 use Math::BigInt;
 use Skein::Rat qw(probability);
 use Skein::Util ();
@@ -11,7 +12,7 @@ sub new {
     my ($class, $seed) = @_;
     $seed //= 1;
     die "random seed must be a bounded scalar\n" if ref($seed) || length($seed) > 1024;
-    return bless {seed => sha256("$seed"), counter => 0, buffer => '', draws => 0}, $class;
+    return bless {seed => sha256(encode('UTF-8', "$seed")), counter => 0, buffer => '', draws => 0}, $class;
 }
 
 sub bytes {
