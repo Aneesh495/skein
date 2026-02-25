@@ -21,6 +21,7 @@ use Skein::Sample;
 use Skein::Polynomial;
 use Skein::Certificate;
 use Skein::Compare;
+use Skein::Causal;
 use Skein::Mission;
 use Skein::Markov;
 use Skein::Parser;
@@ -48,6 +49,7 @@ Usage: perl bin/skein COMMAND MODEL [QUERY] [OPTIONS]
   certificate MODEL [QUERY]    Produce an independently checkable result
   verify MODEL CERTIFICATE     Check integrity and full source-world equivalence
   compare OLD NEW              Compare model structure and a coupled event
+  effect MODEL CAUSE OUTCOME    Analyze paired potential-outcome response types
   mission SPEC.json            Analyze discrete-time shared-domain evolution
   markov SPEC.json             Analyze exact stochastic transitions
   report MODEL                 Write a standalone HTML research report
@@ -221,6 +223,15 @@ sub _run {
         return;
     }
     my $engine = Skein::Engine->new($model, max_nodes => $options->{max_nodes});
+    if ($command eq 'effect') {
+        my ($cause,$outcome) = @$arguments;
+        die "effect requires a treatment node and outcome expression\n" unless @$arguments == 2;
+        my $analysis = Skein::Causal->new($engine);
+        my $data = $analysis->response($cause,Skein::Parser->parse_expression($outcome));
+        $data->{verification} = $analysis->verify_response($data) if @{$model->noise_names} <= 12;
+        _output($data,$options);
+        return;
+    }
     if ($command eq 'report') {
         die "report takes one model\n" if @$arguments;
         require Skein::Report;
