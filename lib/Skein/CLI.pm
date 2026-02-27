@@ -22,6 +22,8 @@ use Skein::Polynomial;
 use Skein::Certificate;
 use Skein::Compare;
 use Skein::Causal;
+use Skein::Network;
+use Skein::Source;
 use Skein::Mission;
 use Skein::Markov;
 use Skein::Parser;
@@ -51,6 +53,8 @@ Usage: perl bin/skein COMMAND MODEL [QUERY] [OPTIONS]
   compare OLD NEW              Compare model structure and a coupled event
   effect MODEL CAUSE OUTCOME    Analyze paired potential-outcome response types
   mission SPEC.json            Analyze discrete-time shared-domain evolution
+  network SPEC.json            Compile cyclic physical connectivity into causal equations
+  source MODEL                 Emit canonical, editable model source
   markov SPEC.json             Analyze exact stochastic transitions
   report MODEL                 Write a standalone HTML research report
   dot MODEL [QUERY]            Write the structural graph or query diagram
@@ -172,6 +176,12 @@ sub _run {
         _output($mission->profile(max_nodes => $options->{max_nodes}), $options);
         return;
     }
+    if ($command eq 'network') {
+        die "network takes one specification\n" if @$arguments;
+        my $network = Skein::Network->new(decode_json_file($path));
+        _output(Skein::Source->emit($network->model),$options);
+        return;
+    }
     if ($command eq 'markov') {
         die "markov takes one specification\n" if @$arguments;
         my $spec = decode_json_file($path);
@@ -202,6 +212,11 @@ sub _run {
     if ($command eq 'export') {
         die "export takes one model\n" if @$arguments;
         _output($model->raw, $options);
+        return;
+    }
+    if ($command eq 'source') {
+        die "source takes one model\n" if @$arguments;
+        _output(Skein::Source->emit($model),$options);
         return;
     }
     if ($command eq 'verify') {

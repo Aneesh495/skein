@@ -1,0 +1,15 @@
+{
+  "name": "bridge",
+  "title": "Two routes still share a flood plain",
+  "vertices": ["west", "north", "south", "east"],
+  "source": "west",
+  "target": "east",
+  "domains": [{"name": "flood", "p": "1/100", "cost": 8}],
+  "edges": [
+    {"name": "wn", "from": "west", "to": "north", "p": "1/20", "domains": ["flood"]},
+    {"name": "ne", "from": "north", "to": "east", "p": "1/20"},
+    {"name": "ws", "from": "west", "to": "south", "p": "1/20", "domains": ["flood"]},
+    {"name": "se", "from": "south", "to": "east", "p": "1/20"},
+    {"name": "ns", "from": "north", "to": "south", "p": "1/20"}
+  ]
+}
