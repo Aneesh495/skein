@@ -1,0 +1,27 @@
+use strict;
+use warnings;
+use Test::More;
+use Skein::Spectrum;
+use Skein::Model;
+use Skein::Engine;
+use Skein::Rat qw(compare);
+
+my $s = Skein::Spectrum->new([qw(a b)],[0,1,1,0]);
+is_deeply($s->coefficients,[{mask => 3,subset => [qw(a b)],coefficient => '1'}],'parity has a single degree-two character');
+is_deeply($s->reconstruct,[0,1,1,0],'inverse Walsh transform');
+is_deeply($s->influence,{a => '1',b => '1'},'parity influence');
+is($s->noise_sensitivity('1/10')->{disagreement_probability},'9/50','exact parity flip disagreement');
+is($s->probability({a => '1/3',b => '1/4'}),'5/12','biased reliability from uniform characters');
+my $model = Skein::Model->from_file('examples/rack.sk');
+my $engine = Skein::Engine->new($model);
+my $root = $engine->compiler->query($model->query('baseline'))->{numerator};
+$s = Skein::Spectrum->from_bdd($engine->compiler->bdd,$root);
+is($s->probability($model->priors),'2599/250000','spectral and diagram weighted probabilities agree');
+is($s->noise_sensitivity(0)->{disagreement_probability},'0','zero flips');
+is($s->noise_sensitivity('1/2')->{correlation},'1/16','independent uniform copies retain squared mean');
+my $constant = Skein::Spectrum->new([],[1]);
+is_deeply($constant->reconstruct,[1],'zero-variable transform');
+is($constant->probability({}),'1','constant mass');
+eval { Skein::Spectrum->new(['a'],[1]) };
+like($@,qr/dimension mismatch/,'malformed table rejected');
+done_testing;

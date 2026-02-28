@@ -24,6 +24,7 @@ use Skein::Compare;
 use Skein::Causal;
 use Skein::Network;
 use Skein::Source;
+use Skein::Spectrum;
 use Skein::Mission;
 use Skein::Markov;
 use Skein::Parser;
@@ -43,6 +44,7 @@ Usage: perl bin/skein COMMAND MODEL [QUERY] [OPTIONS]
   cuts MODEL [QUERY]           Derive minimal failure sets
   importance MODEL [QUERY]     Compute derivatives and reliability importance
   polynomial MODEL [QUERY]     Derive symbolic numerator and denominator
+  spectrum MODEL [QUERY]       Analyze exact uniform Walsh structure and noise stability
   plan MODEL [QUERY]           Search exact repair frontiers
   bounds MODEL [QUERY]         Bound risk over interval priors
   policy MODEL [QUERY]         Synthesize and verify an adaptive sensor policy
@@ -294,6 +296,9 @@ sub _run {
             $parts{$part} = {expression => $polynomial->render, variables => $polynomial->variables, terms => $polynomial->terms};
         }
         $data = \%parts;
+    } elsif ($command eq 'spectrum') {
+        my $root = $engine->compiler->query($query)->{numerator};
+        $data = Skein::Spectrum->from_bdd($engine->compiler->bdd,$root)->profile;
     } elsif ($command eq 'plan') {
         my %planning = (budget => $options->{budget} // 20);
         $planning{target} = $options->{target} if defined $options->{target};
