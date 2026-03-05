@@ -27,6 +27,7 @@ sub new {
     die "unsupported model schema\n" unless $raw->{schema} eq 'skein.model/1';
     $raw->{name} //= 'untitled';
     identifier($raw->{name}, 'model name');
+    die "invalid model title\n" if exists($raw->{title}) && !defined($raw->{title});
     $raw->{title} //= '';
     die "invalid model title\n" if ref($raw->{title}) || length($raw->{title}) > 4096;
     $raw->{queries} //= [];

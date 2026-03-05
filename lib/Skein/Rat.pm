@@ -19,7 +19,9 @@ sub rat {
     die "rational must be a scalar\n" if ref $value;
     die "invalid rational '$value'\n"
         unless $value =~ /\A[+-]?(?:\d+(?:\/\d+)?|\d*\.\d+)\z/;
-    die "rational literal is too long\n" if length($value) > 1024;
+    # Intermediate exact results can be much longer than source literals.
+    # The lexer bounds source tokens separately before they reach arithmetic.
+    die "rational arithmetic text limit exceeded\n" if length($value) > 65_536;
     my $r = Math::BigRat->new("$value");
     die "non-finite rational '$value'\n" if $r->is_nan || $r->is_inf;
     return $r;

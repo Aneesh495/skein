@@ -2,6 +2,7 @@ package Skein::Expr;
 use 5.020;
 use strict;
 use warnings;
+no warnings 'recursion';
 use Exporter 'import';
 use Skein::Util qw(identifier integer boolean check_keys canonical_json deep_copy);
 
