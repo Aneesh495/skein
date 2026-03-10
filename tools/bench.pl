@@ -7,6 +7,8 @@ use lib "$FindBin::Bin/../lib";
 use Getopt::Long qw(GetOptions);
 use Skein::Benchmark;
 use Skein::Util qw(write_json);
+$|=1;
+chdir "$FindBin::Bin/.." or die "cannot enter project: $!\n";
 
 my %options = (size => 256,repetitions => 3,max_nodes => 20_000,out => '.runtime/benchmark.json');
 GetOptions('size=i' => \$options{size},'repetitions=i' => \$options{repetitions},

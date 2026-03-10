@@ -8,6 +8,8 @@ use Getopt::Long qw(GetOptions);
 use Time::HiRes qw(time);
 use Skein::Campaign;
 use Skein::Util qw(write_json);
+$|=1;
+chdir "$FindBin::Bin/.." or die "cannot enter project: $!\n";
 
 my %options = (cases => 128,functions => 256,families => 1024,seed => 'skein.acceptance/1',
     out => '.runtime/campaign.json');
