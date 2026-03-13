@@ -33,11 +33,14 @@ sub create {
 sub verify {
     my ($class, $model, $envelope, %options) = @_;
     check_keys($envelope, [qw(payload sha256)], [qw(payload sha256)], 'certificate envelope');
+    die "invalid certificate integrity hash\n" unless defined($envelope->{sha256})
+        && !ref($envelope->{sha256}) && $envelope->{sha256} =~ /\A[0-9a-f]{64}\z/;
     my $payload = $envelope->{payload};
     check_keys($payload, [qw(schema model_digest query priors diagram result verification)],
         [qw(schema model_digest query priors diagram result verification)], 'certificate');
     die "certificate integrity mismatch\n" unless digest($payload) eq $envelope->{sha256};
-    die "unsupported certificate schema\n" unless $payload->{schema} eq 'skein.certificate/1';
+    die "unsupported certificate schema\n" unless defined($payload->{schema}) && !ref($payload->{schema})
+        && $payload->{schema} eq 'skein.certificate/1';
     die "certificate model identity mismatch\n" unless $payload->{model_digest} eq $model->digest;
     die "certificate priors do not match model\n" unless canonical_json($payload->{priors}) eq canonical_json($model->priors);
     check_keys($payload->{result}, [qw(probability numerator denominator)],
@@ -47,6 +50,8 @@ sub verify {
     my $max_variables = integer($options{max_variables} // 16, 'certificate verification limit', 0, 20);
     my $names = $model->noise_names;
     die "certificate verification variable limit exceeded\n" if @$names > $max_variables;
+    integer($payload->{verification}{variables},'certificate variable claim',0,20);
+    integer($payload->{verification}{worlds},'certificate world claim',1,2 ** 20);
     die "certificate verification dimensions mismatch\n"
         unless $payload->{verification}{variables} == @$names && $payload->{verification}{worlds} == 2 ** @$names;
     my $query = deep_copy($payload->{query});

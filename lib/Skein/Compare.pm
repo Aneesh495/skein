@@ -14,7 +14,7 @@ sub model_diff {
     my $old_raw = $old->raw;
     my $new_raw = $new->raw;
     my @changes;
-    for my $kind (qw(noise nodes queries repairs)) {
+    for my $kind (qw(noise nodes queries repairs sensors)) {
         my %before = map { $_->{name} => $_ } @{$old_raw->{$kind}};
         my %after = map { $_->{name} => $_ } @{$new_raw->{$kind}};
         my %all = (%before, %after);
@@ -28,6 +28,11 @@ sub model_diff {
                     before => $before{$name}, after => $after{$name}};
             }
         }
+    }
+    for my $kind (qw(schema name title intervals order)) {
+        next if canonical_json($old_raw->{$kind}) eq canonical_json($new_raw->{$kind});
+        push @changes,{kind=>'metadata',name=>$kind,change=>'modified',
+            before=>$old_raw->{$kind},after=>$new_raw->{$kind}};
     }
     return {before_digest => $old->digest, after_digest => $new->digest, changes => \@changes};
 }

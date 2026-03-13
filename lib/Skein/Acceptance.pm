@@ -19,6 +19,7 @@ use Skein::Certificate;
 use Skein::Network;
 use Skein::Mission;
 use Skein::Policy;
+use Skein::PolicyOracle;
 use Skein::Report;
 use Skein::Source;
 use Skein::Util qw(write_json write_text decode_json_file read_text integer);
@@ -109,6 +110,10 @@ sub examples {
     my $policy = Skein::Policy->new(Skein::Engine->new($diagnosis));
     my $decision = $policy->synthesize('baseline',budget=>12,failure_loss=>100);
     my $checked = $policy->verify($decision);
+    my $reference = Skein::PolicyOracle->new($diagnosis)->solve('baseline',budget=>12,failure_loss=>100);
+    die "diagnosis policy is not independently optimal\n"
+        unless $reference->{expected_loss} eq $decision->{tree}{expected_loss};
+    $checked->{optimality_reference}=$reference;
     return {passed=>1,models=>\@records,certificates=>\@certificates,
         physical_network=>$network_check,temporal_mission=>$mission_check,diagnosis=>$checked};
 }
