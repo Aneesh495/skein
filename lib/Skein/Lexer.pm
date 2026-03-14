@@ -87,7 +87,7 @@ sub _scan {
                 $self->error('unterminated string escape', \%location)
                     if $self->{position} == length($self->{source});
                 my $escape = $self->_consume(1);
-                my %escapes = ('n' => "\n", 't' => "\t", '"' => '"', '\\' => '\\');
+                my %escapes = ('n' => "\n", 'r' => "\r", 't' => "\t", '"' => '"', '\\' => '\\');
                 $self->error("unknown string escape '$escape'", \%location)
                     unless exists $escapes{$escape};
                 $char = $escapes{$escape};

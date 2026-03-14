@@ -61,7 +61,8 @@ sub _prefix {
     my $threshold;
     if ($name ne 'ite') {
         $threshold = $lexer->expect_type('number')->{value};
-        integer($threshold, 'threshold', 0, 4096);
+        my $valid = eval { integer($threshold, 'threshold', 0, 4096); 1 };
+        $lexer->error($@,$token) unless $valid;
     }
     my @args;
     if ($name eq 'ite') {
@@ -78,7 +79,8 @@ sub _prefix {
     $lexer->expect(')');
     my $result = { op => $name, args => \@args };
     $result->{k} = 0 + $threshold if defined $threshold;
-    validate($result);
+    my $valid = eval { validate($result); 1 };
+    $lexer->error($@,$token) unless $valid;
     return $result;
 }
 
