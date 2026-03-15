@@ -82,7 +82,7 @@ sub _world {
     my ($self, $circuit, $interventions) = @_;
     my $key = canonical_json($interventions);
     return $circuit->{worlds}{$key} if exists $circuit->{worlds}{$key};
-    my %environment = map { $_ => 'u_' . $_ } @{$self->{model}->noise_names};
+    my %environment = %{$circuit->{noise_variables}};
     for my $name (@{$self->{model}->node_order}) {
         $environment{$name} = exists($interventions->{$name})
             ? $self->_gate($circuit, 'const', [], $interventions->{$name})
@@ -94,13 +94,16 @@ sub _world {
 
 sub _circuit {
     my ($self, $query, $priors) = @_;
-    my $circuit = {factors => [], worlds => {}, gate_cache => {}, next_gate => 0};
+    my $circuit = {factors => [], worlds => {}, gate_cache => {}, noise_variables => {}, next_gate => 0};
     my $names = $self->{model}->noise_names;
     die "elimination priors must match noise variables\n" unless ref($priors) eq 'HASH' && keys(%$priors) == @$names;
+    my $noise_index = 0;
     for my $name (@$names) {
         die "missing elimination prior '$name'\n" unless exists $priors->{$name};
         my $p = probability($priors->{$name});
-        push @{$circuit->{factors}}, Skein::Factor->new(['u_' . $name],
+        my $variable = 'u_' . $noise_index++;
+        $circuit->{noise_variables}{$name} = $variable;
+        push @{$circuit->{factors}}, Skein::Factor->new([$variable],
             {'0' => complement($p), '1' => $p}, $self->_options);
     }
     my $target_world = $self->_world($circuit, $query->{interventions});

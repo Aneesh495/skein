@@ -26,6 +26,7 @@ sub new {
     for my $process (@{$spec->{processes}}) {
         check_keys($process, [qw(name initial failure repair)], [qw(name failure repair)], 'mission process');
         my $name = identifier($process->{name}, 'process name');
+        die "mission process name exceeds expansion limit\n" if length($name) > 100;
         die "duplicate mission process\n" if $names{$name}++;
         $process->{initial} = text(probability($process->{initial} // 0));
         $process->{failure} = text(probability($process->{failure}));
