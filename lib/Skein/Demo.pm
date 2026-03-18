@@ -1,0 +1,42 @@
+package Skein::Demo;
+use 5.020;
+use strict;
+use warnings;
+use Skein::Model;
+
+# Keep a complete offline demonstration inside the installed Perl module.
+# The repository example is checked against this source in the test suite.
+sub source {
+    return <<'MODEL';
+model rack;
+title "A replica is only independent until the power fails";
+noise power_noise ~ 1/100;
+noise disk_a_noise ~ 1/50;
+noise disk_b_noise ~ 1/50;
+node power = power_noise;
+node disk_a = disk_a_noise;
+node disk_b = disk_b_noise;
+node replica_a = power | disk_a;
+node replica_b = power | disk_b;
+node outage = replica_a & replica_b;
+query baseline = P(outage);
+query observed_a = P(outage) given(replica_a);
+query repaired_power = P(outage) do(power=0);
+query had_isolated_power = P(outage) do(power=0) factual(outage);
+query had_repaired_a = P(outage) do(disk_a=0) factual(outage);
+repair isolate_power = power=0 cost 8;
+repair replace_a = disk_a=0 cost 3;
+repair replace_b = disk_b=0 cost 3;
+sensor power_alarm = power cost 1;
+sensor disk_a_alarm = disk_a cost 1;
+sensor disk_b_alarm = disk_b cost 1;
+interval power_noise = [1/200,1/50];
+interval disk_a_noise = [1/100,1/25];
+interval disk_b_noise = [1/100,1/25];
+order power_noise, disk_a_noise, disk_b_noise;
+MODEL
+}
+
+sub model { return Skein::Model->from_text($_[0]->source) }
+
+1;

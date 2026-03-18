@@ -25,6 +25,7 @@ use Skein::Causal;
 use Skein::Network;
 use Skein::Source;
 use Skein::Spectrum;
+use Skein::Demo;
 use Skein::Mission;
 use Skein::Markov;
 use Skein::Parser;
@@ -153,9 +154,7 @@ sub _run {
     if ($command eq 'demo') {
         die "demo takes no positional arguments\n" if @$arguments;
         require Skein::Report;
-        my $root = File::Spec->rel2abs(File::Spec->catdir(dirname(__FILE__), '..', '..'));
-        my $path = File::Spec->catfile($root, 'examples', 'rack.sk');
-        my $model = Skein::Model->from_file($path);
+        my $model = Skein::Demo->model;
         my $engine = Skein::Engine->new($model, max_nodes => $options->{max_nodes});
         my $results = $engine->solve_all;
         for my $result (@$results) {

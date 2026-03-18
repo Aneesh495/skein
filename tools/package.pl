@@ -25,6 +25,9 @@ if (-d 'evidence') {
     }},'evidence');
 }
 push @files,'MANIFEST' unless grep { $_ eq 'MANIFEST' } @files;
+# Reserve the frozen receipt in the distribution contract before generating
+# it, so publication of the receipt does not change its source manifest.
+push @files,'evidence/acceptance.json' unless grep { $_ eq 'evidence/acceptance.json' } @files;
 my %seen;
 @files=sort grep { !$seen{$_}++ } @files;
 write_text('MANIFEST',join("\n",@files)."\n");

@@ -6,6 +6,7 @@ use Skein::Engine;
 use Skein::Eliminate;
 use Skein::Mission;
 use Skein::Compare;
+use Skein::Demo;
 use Skein::Expr qw(var);
 use Skein::Util qw(deep_copy);
 
@@ -17,6 +18,7 @@ is(Skein::Eliminate->new($model)->solve('q')->{probability},'1/3','internal fact
 my $collision=Skein::Model->from_text('noise g_0 ~ 1/3; noise u_0 ~ 1/4; node g_1 = g_0 ^ u_0; query q = P(g_1);');
 is(Skein::Eliminate->new($collision)->solve('q')->{probability},'5/12','source names cannot collide with either internal gate namespace');
 my $base=Skein::Model->from_file('examples/rack.sk');
+is(Skein::Demo->model->digest,$base->digest,'installed demonstration includes the complete example model');
 for my $kind (qw(sensors intervals order title)) {
     my $raw=$base->raw;
     if ($kind eq 'sensors') { $raw->{sensors}[0]{cost}++ }

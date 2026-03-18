@@ -1,0 +1,55 @@
+name: check
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  portable:
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            perl: '5.20'
+          - os: ubuntu-24.04
+            perl: '5.34'
+          - os: ubuntu-24.04
+            perl: '5.40'
+          - os: macos-15
+            perl: '5.40'
+          - os: windows-2022
+            perl: '5.40'
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: perl {0}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: shogo82148/actions-setup-perl@8b574cdc2dffdae49f803204a4f2b716a2fa1db7
+        with:
+          perl-version: ${{ matrix.perl }}
+          distribution: ${{ runner.os == 'Windows' && 'strawberry' || 'default' }}
+      - name: Verify source and all examples
+        run: |
+          use strict;
+          use warnings;
+          print "Interpreter $^V on $^O\n";
+          system($^X, 'tools/check.pl');
+          die "verification failed: $?\n" if $?;
+      - name: Run seeded differential campaign
+        run: |
+          use strict;
+          use warnings;
+          system($^X, 'tools/campaign.pl', '--cases', '16', '--families', '256', '--seed', 'ci-contract');
+          die "campaign failed: $?\n" if $?;
+      - name: Verify bounded benchmark and archive
+        run: |
+          use strict;
+          use warnings;
+          system($^X, 'tools/bench.pl', '--size', '64', '--repetitions', '1');
+          die "benchmark failed: $?\n" if $?;
+          system($^X, 'tools/package.pl');
+          die "package failed: $?\n" if $?;

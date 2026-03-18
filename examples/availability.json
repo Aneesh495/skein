@@ -1,0 +1,12 @@
+{
+  "states": ["healthy", "degraded", "offline"],
+  "transitions": [
+    ["49/50", "1/100", "1/100"],
+    ["1/4", "1/2", "1/4"],
+    ["1/2", "0", "1/2"]
+  ],
+  "initial": {"healthy": "1"},
+  "targets": ["offline"],
+  "rewards": {"healthy": "1", "degraded": "1/2", "offline": "0"},
+  "horizon": 8
+}
