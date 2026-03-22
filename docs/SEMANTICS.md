@@ -148,7 +148,7 @@ optional clauses. The emitter and parser are checked by full model round trips.
 | Independent policy oracle | 8 noises, 6 sensors, 10 repairs |
 | Prior-box robustness | 12 varying priors, 4,096 corners |
 | Walsh spectrum | 16 noises |
-| Markov chain | 64 states, 256 transitions in a requested horizon |
+| Markov chain | 64 states, requested horizon 256 |
 | Mission | 16 processes, horizon 64, process names at most 100 characters |
 | Physical network | 12 vertices, 256 edges, 64 fault domains |
 

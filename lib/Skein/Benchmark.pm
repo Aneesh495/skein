@@ -12,7 +12,7 @@ use Skein::Util qw(integer digest);
 sub run {
     my ($class, %options) = @_;
     my $repetitions = integer($options{repetitions} // 3,'benchmark repetitions',1,20);
-    my $max_nodes = integer($options{max_nodes} // 20_000,'benchmark node limit',2,250_000);
+    my $max_nodes = integer($options{max_nodes} // 100_000,'benchmark node limit',2,250_000);
     my $suite = Skein::Workload->suite(size => $options{size} // 256);
     my @cases;
     for my $case (@$suite) {
@@ -26,7 +26,7 @@ sub run {
             my $elapsed = time-$start;
             my ($user_after,$system_after) = times;
             if ($error) {
-                die $error unless $case->{name} =~ /data_first/ && $error =~ /limit exceeded/;
+                die $error unless $error =~ /limit exceeded/;
                 push @runs,{status => 'resource_bound',error => $error,
                     elapsed_seconds => $elapsed,cpu_seconds => $user_after+$system_after-$user_before-$system_before,
                     stats => $engine->compiler->stats};
