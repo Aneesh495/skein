@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="An exact causal reliability analysis generated entirely in Perl.">
+<title>Skein / causal reliability notebook</title>
+<style>
+:root{--paper:#f4f1e8;--ink:#20372a;--muted:#667166;--line:#d7d7c8;--green:#54755b;--white:#fffdf8}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.65 system-ui,sans-serif}
+a{color:var(--green)}header{border-bottom:1px solid var(--line);padding:19px 5%;display:flex;justify-content:space-between;align-items:center}
+.wordmark{font:600 19px/1.2 ui-monospace,monospace;letter-spacing:6px}.header-note{font:11px ui-monospace,monospace;color:var(--muted);letter-spacing:1px}
+main{max-width:1200px;margin:auto;padding:58px 42px 70px}.eyebrow{font:11px ui-monospace,monospace;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+h1{font:normal clamp(34px,5vw,63px)/1.08 Georgia,serif;max-width:930px;margin:19px 0 25px;letter-spacing:-1.8px}
+h2{font:normal 29px/1.25 Georgia,serif;margin:0 0 16px}h3{font:600 15px/1.4 system-ui,sans-serif;margin:19px 0 10px}
+p{max-width:800px}.lead{font-size:17px;color:#526253;max-width:760px}.hero-rule{border-bottom:1px solid var(--line);padding-bottom:38px;margin-bottom:33px}
+.metrics{display:grid;grid-template-columns:2fr 1fr 1fr;gap:25px;margin-top:28px}.metric{border-left:2px solid #95ad92;padding-left:17px}.metric strong{font:normal 33px Georgia,serif;display:block}.metric span{font:11px ui-monospace,monospace;color:var(--muted)}
+.section{border-top:1px solid var(--line);padding-top:28px;margin-top:38px}.section:first-of-type{border-top:0;margin-top:0}.section-index{font:10px ui-monospace,monospace;color:var(--muted);letter-spacing:2px;margin-bottom:9px}
+.columns{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:35px}.columns>*{min-width:0}.card{background:var(--white);border:1px solid var(--line);border-radius:8px;padding:23px;margin:18px 0;min-width:0}
+.card p{margin-bottom:0}.note{font-size:12px;color:var(--muted)}.exact{font-family:ui-monospace,monospace}.tag{font:10px ui-monospace,monospace;background:#e3ebdf;border:1px solid #c4d0be;color:#416046;border-radius:3px;padding:3px 6px;white-space:nowrap}
+.figure{overflow:auto;background:#fffdf8;border:1px solid var(--line);border-radius:7px;padding:15px}.figure svg{display:block;margin:auto;max-width:none}.figure-caption{font-size:12px;color:var(--muted);margin:10px 0}
+.table-scroll{overflow:auto}table{border-collapse:collapse;width:100%;text-align:left;font-size:12px}th{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);padding:11px 12px;border-bottom:1px solid #aebba7}
+td{padding:12px;border-bottom:1px solid #dfdfd1;vertical-align:top}td:first-child{font-family:ui-monospace,monospace}tbody tr:hover{background:#eaeedd}
+pre{font:11px/1.65 ui-monospace,monospace;overflow:auto;background:#eae9df;padding:17px;border-radius:5px;max-height:420px}
+details{border-top:1px solid var(--line);margin:18px 0;padding-top:12px}summary{cursor:pointer;font-size:12px;font-weight:600}footer{border-top:1px solid var(--line);margin-top:48px;padding-top:21px;color:var(--muted);font-size:11px}
+.hash{overflow-wrap:anywhere;font:10px/1.7 ui-monospace,monospace}.pill-row{display:flex;gap:8px;flex-wrap:wrap}.query-note{font:11px ui-monospace,monospace;color:var(--muted)}
+@media(max-width:760px){main{padding:32px 18px}.columns{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}.metric:first-child{grid-column:1/-1}header{padding:16px 18px}.header-note{max-width:155px;text-align:right}h1{letter-spacing:-1px}.card{padding:17px}td,th{padding:9px}}
+@media print{body{background:white}main{max-width:none;padding:20px}header{padding:10px}details{display:none}.figure{overflow:visible}.figure svg{max-width:100%;height:auto}.section{break-inside:avoid}}
+</style>
+</head>
+<body>
+<header><div class="wordmark">skein</div><div class="header-note">EXACT CAUSAL RELIABILITY<br>AN OFFLINE RESEARCH NOTEBOOK</div></header>
+<main>
+<div class="hero-rule"><div class="eyebrow">Model / rack</div><h1>A replica is only independent until the power fails</h1><p class="lead">Shared causes tie apparently separate failures together. This notebook keeps those dependencies explicit, separates observation from intervention, and evaluates alternate worlds under the same underlying noise.</p><div class="pill-row"><span class="tag">EXACT RATIONAL ARITHMETIC</span><span class="tag">SHARED-NOISE WORLDS</span><span class="tag">PURE PERL</span></div><div class="metrics"><div class="metric"><strong>2599/250000</strong><span>baseline / exact probability</span></div><div class="metric"><strong>3</strong><span>independent exogenous noises</span></div><div class="metric"><strong>6</strong><span>structural equations</span></div></div></div><section class="section"><div class="section-index">01 / QUESTIONS</div><h2>Observation changes what we know.<br>Intervention changes what happens.</h2><p>Each result names its conditioning world. Factual evidence stays in the original world while counterfactual outcomes use replaced equations and the same exogenous realization.</p><div class="table-scroll"><table><thead><tr><th scope="col">query</th><th scope="col">event</th><th scope="col">exact probability</th><th scope="col">decimal</th><th scope="col">do</th><th scope="col">conditioning</th></tr></thead><tbody><tr><td>baseline</td><td>outage</td><td>2599/250000</td><td>0.010396</td><td>none</td><td>no changed-world evidence; no factual evidence</td></tr><tr><td>had_isolated_power</td><td>outage</td><td>100/2599</td><td>0.0384763370527</td><td>power=0</td><td>no changed-world evidence; factual outage</td></tr><tr><td>had_repaired_a</td><td>outage</td><td>2500/2599</td><td>0.961908426318</td><td>disk_a=0</td><td>no changed-world evidence; factual outage</td></tr><tr><td>observed_a</td><td>outage</td><td>2599/7450</td><td>0.348859060403</td><td>none</td><td>given replica_a; no factual evidence</td></tr><tr><td>repaired_power</td><td>outage</td><td>1/2500</td><td>0.0004</td><td>power=0</td><td>no changed-world evidence; no factual evidence</td></tr></tbody></table></div><p class="note">Decimals are display approximations. Fractions are the computed results. Conditional rows can describe different populations, so they do not represent a single intervention ranking.</p></section><section class="section"><div class="section-index">02 / MECHANISM</div><h2>The model is the assumption.</h2><div class="columns"><div><div class="figure"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Structural causal graph for rack" viewBox="0 0 670 490" width="670" height="490"><defs><marker id="model-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8b958f"/></marker></defs><path d="M125 191 C125 218 230 218 230 245" fill="none" stroke="#9ca69f" stroke-width="1.5" marker-end="url(#model-arrow)"/><path d="M125 81 C125 108 125 108 125 135" fill="none" stroke="#9ca69f" stroke-width="1.5" marker-end="url(#model-arrow)"/><path d="M335 191 C335 218 440 218 440 245" fill="none" stroke="#9ca69f" stroke-width="1.5" marker-end="url(#model-arrow)"/><path d="M335 81 C335 108 335 108 335 135" fill="none" stroke="#9ca69f" stroke-width="1.5" marker-end="url(#model-arrow)"/><path d="M545 191 C545 218 230 218 230 245" fill="none" stroke="#9ca69f" stroke-width="1.5" marker-end="url(#model-arrow)"/><path d="M545 191 C545 218 440 218 440 245" fill="none" stroke="#9ca69f" stroke-width="1.5" marker-end="url(#model-arrow)"/><path d="M545 81 C545 108 545 108 545 135" fill="none" stroke="#9ca69f" stroke-width="1.5" marker-end="url(#model-arrow)"/><path d="M230 301 C230 328 335 328 335 355" fill="none" stroke="#9ca69f" stroke-width="1.5" marker-end="url(#model-arrow)"/><path d="M440 301 C440 328 335 328 335 355" fill="none" stroke="#9ca69f" stroke-width="1.5" marker-end="url(#model-arrow)"/><g><title>disk_a</title><rect x="35" y="135" width="180" height="56" rx="7" fill="#faf7f0" stroke="#c8c1b3"/><text x="125" y="158" text-anchor="middle" font-family="monospace" font-size="12" fill="#20372a">disk_a</text><text x="125" y="177" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#687269">structural equation</text></g><g><title>disk_a_noise</title><rect x="35" y="25" width="180" height="56" rx="7" fill="#e5efe8" stroke="#90aa98"/><text x="125" y="48" text-anchor="middle" font-family="monospace" font-size="12" fill="#20372a">disk_a_noise</text><text x="125" y="67" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#687269">independent noise / p=1/50</text></g><g><title>disk_b</title><rect x="245" y="135" width="180" height="56" rx="7" fill="#faf7f0" stroke="#c8c1b3"/><text x="335" y="158" text-anchor="middle" font-family="monospace" font-size="12" fill="#20372a">disk_b</text><text x="335" y="177" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#687269">structural equation</text></g><g><title>disk_b_noise</title><rect x="245" y="25" width="180" height="56" rx="7" fill="#e5efe8" stroke="#90aa98"/><text x="335" y="48" text-anchor="middle" font-family="monospace" font-size="12" fill="#20372a">disk_b_noise</text><text x="335" y="67" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#687269">independent noise / p=1/50</text></g><g><title>outage</title><rect x="245" y="355" width="180" height="56" rx="7" fill="#faf7f0" stroke="#c8c1b3"/><text x="335" y="378" text-anchor="middle" font-family="monospace" font-size="12" fill="#20372a">outage</text><text x="335" y="397" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#687269">structural equation</text></g><g><title>power</title><rect x="455" y="135" width="180" height="56" rx="7" fill="#faf7f0" stroke="#c8c1b3"/><text x="545" y="158" text-anchor="middle" font-family="monospace" font-size="12" fill="#20372a">power</text><text x="545" y="177" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#687269">structural equation</text></g><g><title>power_noise</title><rect x="455" y="25" width="180" height="56" rx="7" fill="#e5efe8" stroke="#90aa98"/><text x="545" y="48" text-anchor="middle" font-family="monospace" font-size="12" fill="#20372a">power_noise</text><text x="545" y="67" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#687269">independent noise / p=1/100</text></g><g><title>replica_a</title><rect x="140" y="245" width="180" height="56" rx="7" fill="#faf7f0" stroke="#c8c1b3"/><text x="230" y="268" text-anchor="middle" font-family="monospace" font-size="12" fill="#20372a">replica_a</text><text x="230" y="287" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#687269">structural equation</text></g><g><title>replica_b</title><rect x="350" y="245" width="180" height="56" rx="7" fill="#faf7f0" stroke="#c8c1b3"/><text x="440" y="268" text-anchor="middle" font-family="monospace" font-size="12" fill="#20372a">replica_b</text><text x="440" y="287" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#687269">structural equation</text></g></svg></div><p class="figure-caption">Noise nodes have independent priors. Every other node is a deterministic function of its parents. Correlation is induced by shared ancestry.</p></div><div class="card"><h3>Exact priors</h3><div class="table-scroll"><table><thead><tr><th scope="col">noise</th><th scope="col">P(noise=1)</th></tr></thead><tbody><tr><td>disk_a_noise</td><td>1/50</td></tr><tr><td>disk_b_noise</td><td>1/50</td></tr><tr><td>power_noise</td><td>1/100</td></tr></tbody></table></div><h3>Equation replacement</h3><p>An intervention pins an endogenous node and removes its original incoming mechanism. Downstream equations still execute.</p><h3>Scope</h3><p>These results follow from a specified structural model. They do not identify that model from observational data.</p></div></div><details><summary>Inspect every structural equation</summary><div class="table-scroll"><table><thead><tr><th scope="col">node</th><th scope="col">Boolean equation</th></tr></thead><tbody><tr><td>disk_a</td><td>disk_a_noise</td></tr><tr><td>disk_b</td><td>disk_b_noise</td></tr><tr><td>power</td><td>power_noise</td></tr><tr><td>replica_a</td><td>(power | disk_a)</td></tr><tr><td>replica_b</td><td>(power | disk_b)</td></tr><tr><td>outage</td><td>(replica_a &amp; replica_b)</td></tr></tbody></table></div></details></section><section class="section"><div class="section-index">03 / SYMBOLIC STRUCTURE</div><h2>One event, a shared decision graph.</h2><div class="columns"><div><div class="figure"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Reduced ordered decision diagram" viewBox="0 0 430 455" width="430" height="455"><defs><marker id="diagram-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8b958f"/></marker></defs><path d="M215 270 L120 335" stroke="#aaa394" stroke-width="1.5" stroke-dasharray="4 4" fill="none" marker-end="url(#diagram-arrow)"/><text x="157.5" y="302.5" font-family="monospace" font-size="11" fill="#6a746b">0</text><path d="M215 270 L310 335" stroke="#577a63" stroke-width="1.5" fill="none" marker-end="url(#diagram-arrow)"/><text x="269.5" y="302.5" font-family="monospace" font-size="11" fill="#6a746b">1</text><path d="M215 165 L120 335" stroke="#aaa394" stroke-width="1.5" stroke-dasharray="4 4" fill="none" marker-end="url(#diagram-arrow)"/><text x="157.5" y="250" font-family="monospace" font-size="11" fill="#6a746b">0</text><path d="M215 165 L215 230" stroke="#577a63" stroke-width="1.5" fill="none" marker-end="url(#diagram-arrow)"/><text x="222" y="197.5" font-family="monospace" font-size="11" fill="#6a746b">1</text><path d="M215 60 L215 125" stroke="#aaa394" stroke-width="1.5" stroke-dasharray="4 4" fill="none" marker-end="url(#diagram-arrow)"/><text x="205" y="92.5" font-family="monospace" font-size="11" fill="#6a746b">0</text><path d="M215 60 L310 335" stroke="#577a63" stroke-width="1.5" fill="none" marker-end="url(#diagram-arrow)"/><text x="269.5" y="197.5" font-family="monospace" font-size="11" fill="#6a746b">1</text><g><title>false</title><rect x="44" y="335" width="152" height="40" rx="3" fill="#f4e8df" stroke="#a6b5a8"/><text x="120" y="359" text-anchor="middle" font-family="monospace" font-size="11" fill="#294632">false</text></g><g><title>true</title><rect x="234" y="335" width="152" height="40" rx="3" fill="#e0eddf" stroke="#a6b5a8"/><text x="310" y="359" text-anchor="middle" font-family="monospace" font-size="11" fill="#294632">true</text></g><g><title>disk_b_noise</title><rect x="139" y="230" width="152" height="40" rx="20" fill="#faf7f0" stroke="#a6b5a8"/><text x="215" y="254" text-anchor="middle" font-family="monospace" font-size="11" fill="#294632">disk_b_noise</text></g><g><title>disk_a_noise</title><rect x="139" y="125" width="152" height="40" rx="20" fill="#faf7f0" stroke="#a6b5a8"/><text x="215" y="149" text-anchor="middle" font-family="monospace" font-size="11" fill="#294632">disk_a_noise</text></g><g><title>power_noise</title><rect x="139" y="20" width="152" height="40" rx="20" fill="#faf7f0" stroke="#a6b5a8"/><text x="215" y="44" text-anchor="middle" font-family="monospace" font-size="11" fill="#294632">power_noise</text></g></svg></div><p class="figure-caption">Dashed edges select false; solid edges select true. Identical subfunctions share a node. Skipped noise variables integrate to one.</p></div><div><div class="card"><h3>Minimal sufficient noise assignments</h3><p class="note">The event is monotone in its noise variables.</p><div class="table-scroll"><table><thead><tr><th scope="col">prime implicant</th></tr></thead><tbody><tr><td>disk_a_noise=1 &amp; disk_b_noise=1</td></tr><tr><td>power_noise=1</td></tr></tbody></table></div><p class="note">Implicants can overlap. Their probabilities must not be added.</p></div><div class="card"><h3>Exact numerator polynomial</h3><pre>1*disk_a_noise*disk_b_noise + 1*power_noise + -1*power_noise*disk_a_noise*disk_b_noise</pre><p class="note">The coefficients are exact. The monomials describe prior probabilities, not independent failure scenarios.</p></div></div></div></section><section class="section"><div class="section-index">04 / SENSITIVITY</div><h2>Where does the probability move?</h2><div class="table-scroll"><table><thead><tr><th scope="col">noise</th><th scope="col">exact local derivative</th><th scope="col">risk at prior=0</th><th scope="col">risk at prior=1</th><th scope="col">removable risk</th></tr></thead><tbody><tr><td>power_noise</td><td>2499/2500</td><td>1/2500</td><td>1</td><td>2499/250000</td></tr><tr><td>disk_a_noise</td><td>99/5000</td><td>1/100</td><td>149/5000</td><td>99/250000</td></tr><tr><td>disk_b_noise</td><td>99/5000</td><td>1/100</td><td>149/5000</td><td>99/250000</td></tr></tbody></table></div><p class="note">The derivative is with respect to a noise prior. Changing an exogenous prior is a different operation from replacing an endogenous equation.</p></section><section class="section"><div class="section-index">05 / REPAIR</div><h2>The complete cost and risk frontier.</h2><div class="columns"><div class="figure"><svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Exact repair cost versus residual risk frontier" viewBox="0 0 620 300" width="620" height="300"><path d="M60 25 V245 H585" fill="none" stroke="#99a396"/><path d="M60 245 H585" stroke="#e5e4da"/><text x="50" y="249" text-anchor="end" font-family="monospace" font-size="10">0%</text><path d="M60 190 H585" stroke="#e5e4da"/><text x="50" y="194" text-anchor="end" font-family="monospace" font-size="10">25%</text><path d="M60 135 H585" stroke="#e5e4da"/><text x="50" y="139" text-anchor="end" font-family="monospace" font-size="10">50%</text><path d="M60 80 H585" stroke="#e5e4da"/><text x="50" y="84" text-anchor="end" font-family="monospace" font-size="10">75%</text><path d="M60 25 H585" stroke="#e5e4da"/><text x="50" y="29" text-anchor="end" font-family="monospace" font-size="10">100%</text><polyline points="60,242.71288 203.181818181818,242.8 441.818181818182,244.912 585,245" fill="none" stroke="#557862" stroke-width="2"/><circle cx="60" cy="242.71288" r="5" fill="#315c42"><title>cost=0; risk=2599/250000</title></circle><text x="60" y="265" text-anchor="middle" font-family="monospace" font-size="11">0</text><circle cx="203.181818181818" cy="242.8" r="5" fill="#315c42"><title>cost=3; risk=1/100</title></circle><text x="203.181818181818" y="265" text-anchor="middle" font-family="monospace" font-size="11">3</text><circle cx="441.818181818182" cy="244.912" r="5" fill="#315c42"><title>cost=8; risk=1/2500</title></circle><text x="441.818181818182" y="265" text-anchor="middle" font-family="monospace" font-size="11">8</text><circle cx="585" cy="245" r="5" fill="#315c42"><title>cost=11; risk=0</title></circle><text x="585" y="265" text-anchor="middle" font-family="monospace" font-size="11">11</text><text x="325" y="290" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#687467">repair cost</text></svg></div><div><div class="table-scroll"><table><thead><tr><th scope="col">cost</th><th scope="col">residual risk</th><th scope="col">actions</th></tr></thead><tbody><tr><td>0</td><td>2599/250000</td><td>none</td></tr><tr><td>3</td><td>1/100</td><td>replace_a</td></tr><tr><td>8</td><td>1/2500</td><td>isolate_power</td></tr><tr><td>11</td><td>0</td><td>isolate_power, replace_a</td></tr></tbody></table></div><p class="note">All feasible action subsets within budget 20 were considered. A state limit raises an error instead of returning a partial optimum.</p></div></div><details><summary>Inspect repair search evidence</summary><pre>{
+   &quot;budget&quot; : 20,
+   &quot;frontier&quot; : [
+      {
+         &quot;actions&quot; : [],
+         &quot;cost&quot; : 0,
+         &quot;interventions&quot; : {},
+         &quot;probability&quot; : &quot;2599/250000&quot;
+      },
+      {
+         &quot;actions&quot; : [
+            &quot;replace_a&quot;
+         ],
+         &quot;cost&quot; : 3,
+         &quot;interventions&quot; : {
+            &quot;disk_a&quot; : 0
+         },
+         &quot;probability&quot; : &quot;1/100&quot;
+      },
+      {
+         &quot;actions&quot; : [
+            &quot;isolate_power&quot;
+         ],
+         &quot;cost&quot; : 8,
+         &quot;interventions&quot; : {
+            &quot;power&quot; : 0
+         },
+         &quot;probability&quot; : &quot;1/2500&quot;
+      },
+      {
+         &quot;actions&quot; : [
+            &quot;isolate_power&quot;,
+            &quot;replace_a&quot;
+         ],
+         &quot;cost&quot; : 11,
+         &quot;interventions&quot; : {
+            &quot;disk_a&quot; : 0,
+            &quot;power&quot; : 0
+         },
+         &quot;probability&quot; : &quot;0&quot;
+      }
+   ],
+   &quot;model_digest&quot; : &quot;9ebdba0d25356a30a3b87331e1006282d7ef652aa3b11457e0e525f5560336a9&quot;,
+   &quot;objective&quot; : &quot;minimum exact risk within budget&quot;,
+   &quot;schema&quot; : &quot;skein.plan/1&quot;,
+   &quot;selected&quot; : {
+      &quot;actions&quot; : [
+         &quot;isolate_power&quot;,
+         &quot;replace_a&quot;
+      ],
+      &quot;cost&quot; : 11,
+      &quot;interventions&quot; : {
+         &quot;disk_a&quot; : 0,
+         &quot;power&quot; : 0
+      },
+      &quot;probability&quot; : &quot;0&quot;
+   },
+   &quot;stats&quot; : {
+      &quot;budget_pruned&quot; : 0,
+      &quot;conflicts&quot; : 0,
+      &quot;feasible&quot; : 8,
+      &quot;states&quot; : 15
+   },
+   &quot;status&quot; : &quot;optimal&quot;,
+   &quot;target&quot; : null,
+   &quot;tie_policy&quot; : &quot;One lexicographically first representative per equal cost and risk.&quot;
+}
+</pre></details></section><section class="section"><div class="section-index">06 / DIAGNOSIS</div><h2>Sometimes the next action is a measurement.</h2><div class="metrics"><div class="metric"><strong>2599/2500</strong><span>expected sensing cost + repair cost + failure loss</span></div><div class="metric"><strong>2599/250000</strong><span>residual failure probability</span></div><div class="metric"><strong>0</strong><span>expected observation and repair cost</span></div></div><p>The adaptive policy observes factual sensors before choosing repairs. The per-realization budget is 20 and the failure loss is 100. Every possible noise realization was independently replayed to verify the expected cost and risk.</p><details><summary>Inspect the entire diagnostic policy and its verification</summary><pre>{
+   &quot;budget&quot; : 20,
+   &quot;failure_loss&quot; : &quot;100&quot;,
+   &quot;model_digest&quot; : &quot;9ebdba0d25356a30a3b87331e1006282d7ef652aa3b11457e0e525f5560336a9&quot;,
+   &quot;objective&quot; : &quot;Minimum expected observation cost plus repair cost plus failure loss.&quot;,
+   &quot;observation_semantics&quot; : &quot;Sensors observe the factual world before any repair.&quot;,
+   &quot;query&quot; : {
+      &quot;event&quot; : {
+         &quot;name&quot; : &quot;outage&quot;,
+         &quot;op&quot; : &quot;var&quot;
+      },
+      &quot;interventions&quot; : {},
+      &quot;name&quot; : &quot;baseline&quot;
+   },
+   &quot;schema&quot; : &quot;skein.policy/1&quot;,
+   &quot;stats&quot; : {
+      &quot;memo_hits&quot; : 28,
+      &quot;repair_frontiers&quot; : 27,
+      &quot;sensor_branches&quot; : 54,
+      &quot;states&quot; : 27
+   },
+   &quot;tree&quot; : {
+      &quot;actions&quot; : [],
+      &quot;context&quot; : &quot;1&quot;,
+      &quot;expected_cost&quot; : &quot;0&quot;,
+      &quot;expected_loss&quot; : &quot;2599/2500&quot;,
+      &quot;expected_risk&quot; : &quot;2599/250000&quot;,
+      &quot;interventions&quot; : {},
+      &quot;kind&quot; : &quot;repair&quot;,
+      &quot;readings&quot; : {},
+      &quot;repair_cost&quot; : 0
+   },
+   &quot;verification&quot; : {
+      &quot;expected_cost&quot; : &quot;0&quot;,
+      &quot;expected_loss&quot; : &quot;2599/2500&quot;,
+      &quot;expected_risk&quot; : &quot;2599/250000&quot;,
+      &quot;verified&quot; : 1,
+      &quot;worlds&quot; : 8
+   }
+}
+</pre></details></section><section class="section"><div class="section-index">07 / PRIOR UNCERTAINTY</div><h2>Exact bounds over a box of priors.</h2><div class="table-scroll"><table><thead><tr><th scope="col">bound</th><th scope="col">exact probability</th><th scope="col">attaining priors</th></tr></thead><tbody><tr><td>minimum</td><td>10199/2000000</td><td>{&quot;disk_a_noise&quot;:&quot;1/100&quot;,&quot;disk_b_noise&quot;:&quot;1/100&quot;,&quot;power_noise&quot;:&quot;1/200&quot;}</td></tr><tr><td>maximum</td><td>337/15625</td><td>{&quot;disk_a_noise&quot;:&quot;1/25&quot;,&quot;disk_b_noise&quot;:&quot;1/25&quot;,&quot;power_noise&quot;:&quot;1/50&quot;}</td></tr></tbody></table></div><p class="note">All 8 distinct corners were evaluated. The result assumes an independent-prior box and strictly positive evidence at every corner.</p></section><section class="section"><div class="section-index">08 / A REALIZATION</div><h2>A complete most-probable witness.</h2><div class="table-scroll"><table><thead><tr><th scope="col">noise</th><th scope="col">value</th></tr></thead><tbody><tr><td>disk_a_noise</td><td>0</td></tr><tr><td>disk_b_noise</td><td>0</td></tr><tr><td>power_noise</td><td>1</td></tr></tbody></table></div><p class="note">This complete assignment has joint mass 2401/250000. Its mass conditional on query evidence is 2401/250000. It is one realization, not a minimal explanation.</p><details><summary>Replay factual and target structural equations</summary><pre>{
+   &quot;factual&quot; : {
+      &quot;equations&quot; : [
+         {
+            &quot;equation&quot; : &quot;disk_a_noise&quot;,
+            &quot;intervened&quot; : 0,
+            &quot;node&quot; : &quot;disk_a&quot;,
+            &quot;original_value&quot; : 0,
+            &quot;value&quot; : 0
+         },
+         {
+            &quot;equation&quot; : &quot;disk_b_noise&quot;,
+            &quot;intervened&quot; : 0,
+            &quot;node&quot; : &quot;disk_b&quot;,
+            &quot;original_value&quot; : 0,
+            &quot;value&quot; : 0
+         },
+         {
+            &quot;equation&quot; : &quot;power_noise&quot;,
+            &quot;intervened&quot; : 0,
+            &quot;node&quot; : &quot;power&quot;,
+            &quot;original_value&quot; : 1,
+            &quot;value&quot; : 1
+         },
+         {
+            &quot;equation&quot; : &quot;(power | disk_a)&quot;,
+            &quot;intervened&quot; : 0,
+            &quot;node&quot; : &quot;replica_a&quot;,
+            &quot;original_value&quot; : 1,
+            &quot;value&quot; : 1
+         },
+         {
+            &quot;equation&quot; : &quot;(power | disk_b)&quot;,
+            &quot;intervened&quot; : 0,
+            &quot;node&quot; : &quot;replica_b&quot;,
+            &quot;original_value&quot; : 1,
+            &quot;value&quot; : 1
+         },
+         {
+            &quot;equation&quot; : &quot;(replica_a &amp; replica_b)&quot;,
+            &quot;intervened&quot; : 0,
+            &quot;node&quot; : &quot;outage&quot;,
+            &quot;original_value&quot; : 1,
+            &quot;value&quot; : 1
+         }
+      ],
+      &quot;values&quot; : {
+         &quot;disk_a&quot; : 0,
+         &quot;disk_a_noise&quot; : 0,
+         &quot;disk_b&quot; : 0,
+         &quot;disk_b_noise&quot; : 0,
+         &quot;outage&quot; : 1,
+         &quot;power&quot; : 1,
+         &quot;power_noise&quot; : 1,
+         &quot;replica_a&quot; : 1,
+         &quot;replica_b&quot; : 1
+      }
+   },
+   &quot;mass&quot; : &quot;2401/250000&quot;,
+   &quot;noise&quot; : {
+      &quot;disk_a_noise&quot; : 0,
+      &quot;disk_b_noise&quot; : 0,
+      &quot;power_noise&quot; : 1
+   },
+   &quot;posterior_mass&quot; : &quot;2401/250000&quot;,
+   &quot;status&quot; : &quot;witness&quot;,
+   &quot;target&quot; : {
+      &quot;equations&quot; : [
+         {
+            &quot;equation&quot; : &quot;disk_a_noise&quot;,
+            &quot;intervened&quot; : 0,
+            &quot;node&quot; : &quot;disk_a&quot;,
+            &quot;original_value&quot; : 0,
+            &quot;value&quot; : 0
+         },
+         {
+            &quot;equation&quot; : &quot;disk_b_noise&quot;,
+            &quot;intervened&quot; : 0,
+            &quot;node&quot; : &quot;disk_b&quot;,
+            &quot;original_value&quot; : 0,
+            &quot;value&quot; : 0
+         },
+         {
+            &quot;equation&quot; : &quot;power_noise&quot;,
+            &quot;intervened&quot; : 0,
+            &quot;node&quot; : &quot;power&quot;,
+            &quot;original_value&quot; : 1,
+            &quot;value&quot; : 1
+         },
+         {
+            &quot;equation&quot; : &quot;(power | disk_a)&quot;,
+            &quot;intervened&quot; : 0,
+            &quot;node&quot; : &quot;replica_a&quot;,
+            &quot;original_value&quot; : 1,
+            &quot;value&quot; : 1
+         },
+         {
+            &quot;equation&quot; : &quot;(power | disk_b)&quot;,
+            &quot;intervened&quot; : 0,
+            &quot;node&quot; : &quot;replica_b&quot;,
+            &quot;original_value&quot; : 1,
+            &quot;value&quot; : 1
+         },
+         {
+            &quot;equation&quot; : &quot;(replica_a &amp; replica_b)&quot;,
+            &quot;intervened&quot; : 0,
+            &quot;node&quot; : &quot;outage&quot;,
+            &quot;original_value&quot; : 1,
+            &quot;value&quot; : 1
+         }
+      ],
+      &quot;values&quot; : {
+         &quot;disk_a&quot; : 0,
+         &quot;disk_a_noise&quot; : 0,
+         &quot;disk_b&quot; : 0,
+         &quot;disk_b_noise&quot; : 0,
+         &quot;outage&quot; : 1,
+         &quot;power&quot; : 1,
+         &quot;power_noise&quot; : 1,
+         &quot;replica_a&quot; : 1,
+         &quot;replica_b&quot; : 1
+      }
+   }
+}
+</pre></details></section><section class="section"><div class="section-index">09 / VERIFICATION</div><h2>Results you can recompute.</h2><div class="table-scroll"><table><thead><tr><th scope="col">query</th><th scope="col">independent verification</th><th scope="col">worlds</th></tr></thead><tbody><tr><td>baseline</td><td>three_backends_agree</td><td>8</td></tr><tr><td>had_isolated_power</td><td>three_backends_agree</td><td>8</td></tr><tr><td>had_repaired_a</td><td>three_backends_agree</td><td>8</td></tr><tr><td>observed_a</td><td>three_backends_agree</td><td>8</td></tr><tr><td>repaired_power</td><td>three_backends_agree</td><td>8</td></tr></tbody></table></div><p>The symbolic engine uses reduced ordered decision diagrams. The factor engine lowers equations into sparse rational gate constraints and eliminates variables. The enumerator executes each source world directly. The certificate checker compares the complete diagram truth function with the source, including zero-weight worlds.</p><details><summary>Inspect certificate verification and runtime progress</summary><pre>{
+   &quot;certificate&quot; : {
+      &quot;status&quot; : &quot;available&quot;,
+      &quot;value&quot; : {
+         &quot;denominator&quot; : &quot;1&quot;,
+         &quot;diagram_nodes&quot; : 5,
+         &quot;model_digest&quot; : &quot;9ebdba0d25356a30a3b87331e1006282d7ef652aa3b11457e0e525f5560336a9&quot;,
+         &quot;numerator&quot; : &quot;2599/250000&quot;,
+         &quot;probability&quot; : &quot;2599/250000&quot;,
+         &quot;verified&quot; : 1,
+         &quot;worlds&quot; : 8
+      }
+   },
+   &quot;diagram_stats&quot; : {
+      &quot;apply_calls&quot; : 52,
+      &quot;cache_entries&quot; : 34,
+      &quot;cache_hits&quot; : 46,
+      &quot;compiled_expressions&quot; : 7,
+      &quot;nodes&quot; : 13,
+      &quot;peak_work&quot; : 7,
+      &quot;unique_hits&quot; : 21,
+      &quot;worlds&quot; : 3
+   }
+}
+</pre></details><details><summary>Inspect the normalized input model</summary><pre>{
+   &quot;intervals&quot; : {
+      &quot;disk_a_noise&quot; : [
+         &quot;1/100&quot;,
+         &quot;1/25&quot;
+      ],
+      &quot;disk_b_noise&quot; : [
+         &quot;1/100&quot;,
+         &quot;1/25&quot;
+      ],
+      &quot;power_noise&quot; : [
+         &quot;1/200&quot;,
+         &quot;1/50&quot;
+      ]
+   },
+   &quot;name&quot; : &quot;rack&quot;,
+   &quot;nodes&quot; : [
+      {
+         &quot;expr&quot; : {
+            &quot;name&quot; : &quot;disk_a_noise&quot;,
+            &quot;op&quot; : &quot;var&quot;
+         },
+         &quot;name&quot; : &quot;disk_a&quot;
+      },
+      {
+         &quot;expr&quot; : {
+            &quot;name&quot; : &quot;disk_b_noise&quot;,
+            &quot;op&quot; : &quot;var&quot;
+         },
+         &quot;name&quot; : &quot;disk_b&quot;
+      },
+      {
+         &quot;expr&quot; : {
+            &quot;args&quot; : [
+               {
+                  &quot;name&quot; : &quot;replica_a&quot;,
+                  &quot;op&quot; : &quot;var&quot;
+               },
+               {
+                  &quot;name&quot; : &quot;replica_b&quot;,
+                  &quot;op&quot; : &quot;var&quot;
+               }
+            ],
+            &quot;op&quot; : &quot;and&quot;
+         },
+         &quot;name&quot; : &quot;outage&quot;
+      },
+      {
+         &quot;expr&quot; : {
+            &quot;name&quot; : &quot;power_noise&quot;,
+            &quot;op&quot; : &quot;var&quot;
+         },
+         &quot;name&quot; : &quot;power&quot;
+      },
+      {
+         &quot;expr&quot; : {
+            &quot;args&quot; : [
+               {
+                  &quot;name&quot; : &quot;power&quot;,
+                  &quot;op&quot; : &quot;var&quot;
+               },
+               {
+                  &quot;name&quot; : &quot;disk_a&quot;,
+                  &quot;op&quot; : &quot;var&quot;
+               }
+            ],
+            &quot;op&quot; : &quot;or&quot;
+         },
+         &quot;name&quot; : &quot;replica_a&quot;
+      },
+      {
+         &quot;expr&quot; : {
+            &quot;args&quot; : [
+               {
+                  &quot;name&quot; : &quot;power&quot;,
+                  &quot;op&quot; : &quot;var&quot;
+               },
+               {
+                  &quot;name&quot; : &quot;disk_b&quot;,
+                  &quot;op&quot; : &quot;var&quot;
+               }
+            ],
+            &quot;op&quot; : &quot;or&quot;
+         },
+         &quot;name&quot; : &quot;replica_b&quot;
+      }
+   ],
+   &quot;noise&quot; : [
+      {
+         &quot;name&quot; : &quot;disk_a_noise&quot;,
+         &quot;p&quot; : &quot;1/50&quot;
+      },
+      {
+         &quot;name&quot; : &quot;disk_b_noise&quot;,
+         &quot;p&quot; : &quot;1/50&quot;
+      },
+      {
+         &quot;name&quot; : &quot;power_noise&quot;,
+         &quot;p&quot; : &quot;1/100&quot;
+      }
+   ],
+   &quot;order&quot; : [
+      &quot;power_noise&quot;,
+      &quot;disk_a_noise&quot;,
+      &quot;disk_b_noise&quot;
+   ],
+   &quot;queries&quot; : [
+      {
+         &quot;event&quot; : {
+            &quot;name&quot; : &quot;outage&quot;,
+            &quot;op&quot; : &quot;var&quot;
+         },
+         &quot;interventions&quot; : {},
+         &quot;name&quot; : &quot;baseline&quot;
+      },
+      {
+         &quot;event&quot; : {
+            &quot;name&quot; : &quot;outage&quot;,
+            &quot;op&quot; : &quot;var&quot;
+         },
+         &quot;factual&quot; : {
+            &quot;name&quot; : &quot;outage&quot;,
+            &quot;op&quot; : &quot;var&quot;
+         },
+         &quot;interventions&quot; : {
+            &quot;power&quot; : 0
+         },
+         &quot;name&quot; : &quot;had_isolated_power&quot;
+      },
+      {
+         &quot;event&quot; : {
+            &quot;name&quot; : &quot;outage&quot;,
+            &quot;op&quot; : &quot;var&quot;
+         },
+         &quot;factual&quot; : {
+            &quot;name&quot; : &quot;outage&quot;,
+            &quot;op&quot; : &quot;var&quot;
+         },
+         &quot;interventions&quot; : {
+            &quot;disk_a&quot; : 0
+         },
+         &quot;name&quot; : &quot;had_repaired_a&quot;
+      },
+      {
+         &quot;event&quot; : {
+            &quot;name&quot; : &quot;outage&quot;,
+            &quot;op&quot; : &quot;var&quot;
+         },
+         &quot;evidence&quot; : {
+            &quot;name&quot; : &quot;replica_a&quot;,
+            &quot;op&quot; : &quot;var&quot;
+         },
+         &quot;interventions&quot; : {},
+         &quot;name&quot; : &quot;observed_a&quot;
+      },
+      {
+         &quot;event&quot; : {
+            &quot;name&quot; : &quot;outage&quot;,
+            &quot;op&quot; : &quot;var&quot;
+         },
+         &quot;interventions&quot; : {
+            &quot;power&quot; : 0
+         },
+         &quot;name&quot; : &quot;repaired_power&quot;
+      }
+   ],
+   &quot;repairs&quot; : [
+      {
+         &quot;cost&quot; : 8,
+         &quot;name&quot; : &quot;isolate_power&quot;,
+         &quot;node&quot; : &quot;power&quot;,
+         &quot;value&quot; : 0
+      },
+      {
+         &quot;cost&quot; : 3,
+         &quot;name&quot; : &quot;replace_a&quot;,
+         &quot;node&quot; : &quot;disk_a&quot;,
+         &quot;value&quot; : 0
+      },
+      {
+         &quot;cost&quot; : 3,
+         &quot;name&quot; : &quot;replace_b&quot;,
+         &quot;node&quot; : &quot;disk_b&quot;,
+         &quot;value&quot; : 0
+      }
+   ],
+   &quot;schema&quot; : &quot;skein.model/1&quot;,
+   &quot;sensors&quot; : [
+      {
+         &quot;cost&quot; : 1,
+         &quot;expr&quot; : {
+            &quot;name&quot; : &quot;disk_a&quot;,
+            &quot;op&quot; : &quot;var&quot;
+         },
+         &quot;name&quot; : &quot;disk_a_alarm&quot;
+      },
+      {
+         &quot;cost&quot; : 1,
+         &quot;expr&quot; : {
+            &quot;name&quot; : &quot;disk_b&quot;,
+            &quot;op&quot; : &quot;var&quot;
+         },
+         &quot;name&quot; : &quot;disk_b_alarm&quot;
+      },
+      {
+         &quot;cost&quot; : 1,
+         &quot;expr&quot; : {
+            &quot;name&quot; : &quot;power&quot;,
+            &quot;op&quot; : &quot;var&quot;
+         },
+         &quot;name&quot; : &quot;power_alarm&quot;
+      }
+   ],
+   &quot;title&quot; : &quot;A replica is only independent until the power fails&quot;
+}
+</pre></details><p class="hash">MODEL SHA-256<br>9ebdba0d25356a30a3b87331e1006282d7ef652aa3b11457e0e525f5560336a9</p></section><footer>Generated entirely in Perl. No remote assets, JavaScript, or service connection are required. Exact inference is exponential in the worst case; bounded analyses identify unavailable results explicitly. This notebook records a specified model, not evidence that its assumptions describe a particular real system.</footer></main></body></html>

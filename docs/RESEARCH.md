@@ -48,12 +48,12 @@ verification paths.
   operations are the foundation of the symbolic representation.
 * Shin-ichi Minato, [Zero-Suppressed BDDs for Set Manipulation in Combinatorial Problems](https://doi.org/10.1145/157485.164890),
   DAC, 1993. The zero-suppression rule motivates compact families of literal sets.
-* Alexander Balke and Judea Pearl, [Probabilistic Evaluation of Counterfactual Queries](https://arxiv.org/abs/1302.4929),
-  UAI, 1994. Shared latent realizations provide the causal-world interpretation.
+* Alexander Balke and Judea Pearl, [Counterfactuals and Policy Analysis in Structural Models](https://arxiv.org/abs/1302.4929),
+  UAI, 1995. Shared latent realizations provide the causal-world interpretation.
 * [ADDMC](https://github.com/vardigroup/ADDMC), the authors' implementation of
   weighted model counting with algebraic decision diagrams. A related exact
   inference system with a different representation and problem interface.
-* [Fault Trees and Binary Decision Diagrams](https://arxiv.org/abs/2310.04448).
+* [Fault Trees, Decision Trees, And Binary Decision Diagrams: A Systematic Comparison](https://arxiv.org/abs/2310.04448).
   Relevant context for Boolean reliability representations and analysis.
 
 The implementation is written for this repository. Dependencies are modules
