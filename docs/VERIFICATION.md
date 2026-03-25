@@ -35,6 +35,10 @@ Runtime, build, Git metadata, and evidence outputs are excluded to avoid circula
 hashes. The distribution's `MANIFEST` is included. Its reserved receipt path is
 established before acceptance generation.
 
+The tracked `.gitattributes` pins text checkout bytes to LF on every platform.
+It is part of source identity, and CI verifies the published receipt on each OS.
+This keeps Git's `core.autocrlf` preference from changing the receipt's input.
+
 ```sh
 perl tools/verify.pl
 perl tools/accept.pl --out .runtime/acceptance.json

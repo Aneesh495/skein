@@ -32,4 +32,11 @@ ok(!eval { Skein::Evidence->verify_bundle($dir,$corrupt); 1 },'rehashed unsucces
 ok(!eval { Skein::Evidence->file_record($dir,'../secret'); 1 },'parent traversal rejected');
 ok(!eval { Skein::Evidence->file_record($dir,'/secret'); 1 },'absolute artifact path rejected');
 ok(!eval { Skein::Evidence->file_record($dir,'lib//A.pm'); 1 },'empty path component rejected');
+write_text("$dir/.gitattributes","* text=auto eol=lf\n");
+my $attributes = Skein::Evidence->source_manifest($dir);
+ok(grep($_->{path} eq '.gitattributes', @{$attributes->{files}}),
+    'checkout byte policy is part of source identity');
+write_text("$dir/.gitattributes","* text=auto eol=crlf\n");
+ok(!eval { Skein::Evidence->verify_source($dir,$attributes); 1 },
+    'changed checkout byte policy invalidates acceptance');
 done_testing;

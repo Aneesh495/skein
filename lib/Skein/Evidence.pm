@@ -8,7 +8,7 @@ use Digest::SHA;
 use Skein::Util qw(check_keys digest canonical_json integer deep_copy write_json decode_json_file);
 
 my @ROOTS = qw(lib bin tools t examples docs .github);
-my @FILES = qw(README.md LICENSE Makefile.PL MANIFEST .gitignore);
+my @FILES = qw(README.md LICENSE Makefile.PL MANIFEST .gitignore .gitattributes);
 
 sub _relative {
     my ($path) = @_;

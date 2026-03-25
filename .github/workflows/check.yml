@@ -39,6 +39,8 @@ jobs:
           print "Interpreter $^V on $^O\n";
           system($^X, 'tools/check.pl');
           die "verification failed: $?\n" if $?;
+          system($^X, 'tools/verify.pl');
+          die "published receipt failed: $?\n" if $?;
       - name: Run seeded differential campaign
         run: |
           use strict;
