@@ -20,9 +20,12 @@ is(text(add(mul('3/4', 0), mul('1/4', 1))), '1/4', 'nested zero arithmetic');
 my $original = rat('1/3');
 add($original, 1);
 is(text($original), '1/3', 'arithmetic does not mutate operands');
-for my $bad ('NaN', '1/0', 'inf', '1e5', {}, undef) {
-    ok(!eval { rat($bad); 1 }, 'reject invalid rational');
+for my $bad ('NaN', '1/0', 'inf', '1e5', {}, undef, '0/0', '+1/000', '-10/00', '30/0000') {
+    my $label = !defined($bad) ? 'undefined' : ref($bad) || $bad;
+    ok(!eval { rat($bad); 1 }, "reject invalid rational: $label");
 }
+is(text(rat('001/002')), '1/2', 'nonzero denominator with leading zeroes');
+is(text(rat('0/001')), '0', 'zero numerator with nonzero denominator');
 for my $bad ('-1/10', '11/10') {
     ok(!eval { probability($bad); 1 }, 'reject invalid probability');
 }

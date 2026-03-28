@@ -18,10 +18,12 @@ sub rat {
     }
     die "rational must be a scalar\n" if ref $value;
     die "invalid rational '$value'\n"
-        unless $value =~ /\A[+-]?(?:\d+(?:\/\d+)?|\d*\.\d+)\z/;
+        unless $value =~ /\A[+-]?(?:[0-9]+(?:\/[0-9]+)?|[0-9]*\.[0-9]+)\z/;
     # Intermediate exact results can be much longer than source literals.
     # The lexer bounds source tokens separately before they reach arithmetic.
     die "rational arithmetic text limit exceeded\n" if length($value) > 65_536;
+    # Older bundled BigRat parsers do not consistently flag undefined fractions.
+    die "zero rational denominator\n" if $value =~ /\/0+\z/;
     my $r = Math::BigRat->new("$value");
     die "non-finite rational '$value'\n" if $r->is_nan || $r->is_inf;
     return $r;

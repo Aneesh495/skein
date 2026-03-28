@@ -26,8 +26,10 @@ sub rejected {
     is_deeply(\@warnings,[],"$name no runtime warnings");
 }
 
-for my $value (undef,[],{},'NaN','Inf','1e3','2/0','0/0',' 1/2','1/2 ','--1','1//2','') {
-    rejected('nonrational input',sub { rat($value) });
+for my $value (undef,[],{},'NaN','Inf','1e3','2/0','0/0',' 1/2','1/2 ','--1','1//2','', '٠/١', '١.٥') {
+    my $label = !defined($value) ? 'undefined' : ref($value) || $value;
+    $label =~ s/([^\x20-\x7e])/sprintf('U+%04X',ord($1))/ge;
+    rejected("nonrational input $label",sub { rat($value) });
 }
 for my $value ('-1/100','101/100','2') {
     rejected('out-of-range probability',sub { probability($value) },qr/outside/);
