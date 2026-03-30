@@ -26,6 +26,10 @@ for my $bad ('NaN', '1/0', 'inf', '1e5', {}, undef, '0/0', '+1/000', '-10/00', '
 }
 is(text(rat('001/002')), '1/2', 'nonzero denominator with leading zeroes');
 is(text(rat('0/001')), '0', 'zero numerator with nonzero denominator');
+for my $spelling ('NaN', 'inf', '-inf', '1/0', '-1/0') {
+    my $object = Math::BigRat->new($spelling);
+    ok(!eval { rat($object); 1 }, "reject undefined rational object: $spelling");
+}
 for my $bad ('-1/10', '11/10') {
     ok(!eval { probability($bad); 1 }, 'reject invalid probability');
 }

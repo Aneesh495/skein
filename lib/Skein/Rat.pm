@@ -13,7 +13,8 @@ sub rat {
     my ($value) = @_;
     die "rational value is undefined\n" unless defined $value;
     if (blessed($value) && $value->isa('Math::BigRat')) {
-        die "non-finite rational\n" if $value->is_nan || $value->is_inf;
+        die "non-finite rational\n" if $value->is_nan || $value->is_inf
+            || $value->denominator->is_zero;
         return $value->copy;
     }
     die "rational must be a scalar\n" if ref $value;
