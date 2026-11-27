@@ -27,7 +27,7 @@ jobs:
       run:
         shell: perl {0}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - uses: shogo82148/actions-setup-perl@8b574cdc2dffdae49f803204a4f2b716a2fa1db7
         with:
           perl-version: ${{ matrix.perl }}
